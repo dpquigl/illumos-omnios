@@ -1,0 +1,111 @@
+/*
+ * CDDL HEADER START
+ *
+ * The contents of this file are subject to the terms of the
+ * Common Development and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
+ *
+ * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+ * or http://www.opensolaris.org/os/licensing.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
+ *
+ * When distributing Covered Code, include this CDDL HEADER in each
+ * file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+ * If applicable, add the following below this CDDL HEADER, with the
+ * fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [yyyy] [name of copyright owner]
+ *
+ * CDDL HEADER END
+ */
+
+/*
+ * Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Use is subject to license terms.
+ */
+
+/*
+ * This source code originated from
+ * http://www.nsa.gov/selinux/archives/libselinux-2.0.65.tgz
+ * with the following LICENSE file in the top-level of the tar archive:
+ *
+ * This library (libselinux) is public domain software, i.e. not copyrighted.
+ *
+ * Warranty Exclusion
+ * ------------------
+ * You agree that this software is a
+ * non-commercially developed program that may contain "bugs" (as that
+ * term is used in the industry) and that it may not function as intended.
+ * The software is licensed "as is". NSA makes no, and hereby expressly
+ * disclaims all, warranties, express, implied, statutory, or otherwise
+ * with respect to the software, including noninfringement and the implied
+ * warranties of merchantability and fitness for a particular purpose.
+ *
+ * Limitation of Liability
+ * -----------------------
+ * In no event will NSA be liable for any damages, including loss of data,
+ * lost profits, cost of cover, or other special, incidental,
+ * consequential, direct or indirect damages arising from the software or
+ * the use thereof, however caused and on any theory of liability. This
+ * limitation will apply even if NSA has been advised of the possibility
+ * of such damage. You acknowledge that this is a reasonable allocation of
+ * risk.
+ */
+
+#ifndef _FMAC_FMAC_CONTEXT_H
+#define	_FMAC_FMAC_CONTEXT_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <fmac/fmac.h>
+
+/*
+ * Functions to deal with security contexts in user space.
+ */
+
+typedef struct {
+	void *ptr;
+} fmac_context_s_t;
+
+typedef fmac_context_s_t *fmac_context_t;
+
+/*
+ * Return a new context initialized to a context string.
+ */
+extern fmac_context_t fmac_context_new(const char *);
+
+/*
+ * Return a pointer to the string value of the fmac_context_t
+ * Valid until the next call to fmac_context_str or fmac_context_free
+ * for the same fmac_context_t*
+ */
+extern char *fmac_context_str(fmac_context_t);
+
+/*
+ * Free the storage used by a context.
+ */
+extern void fmac_context_free(fmac_context_t);
+
+/*
+ * Get a pointer to the string value of a context component.
+ */
+extern const char *fmac_context_type_get(fmac_context_t);
+extern const char *fmac_context_range_get(fmac_context_t);
+extern const char *fmac_context_role_get(fmac_context_t);
+extern const char *fmac_context_user_get(fmac_context_t);
+
+/*
+ * Set a context component.  Returns nonzero if unsuccessful.
+ */
+extern int fmac_context_type_set(fmac_context_t, const char *);
+extern int fmac_context_range_set(fmac_context_t, const char *);
+extern int fmac_context_role_set(fmac_context_t, const char *);
+extern int fmac_context_user_set(fmac_context_t, const char *);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _FMAC_FMAC_CONTEXT_H */

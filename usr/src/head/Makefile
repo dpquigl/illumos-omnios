@@ -289,6 +289,10 @@ RPCSVC_GEN_HDRS = \
 	ufs_prot.h	\
 	nfs_acl.h
 
+FMACHDRS = \
+	fmac_context.h	\
+	fmac.h
+
 SYMHDRASSERT = $(ROOT)/usr/include/iso/assert_iso.h
 SYMHDRERRNO = $(ROOT)/usr/include/iso/errno_iso.h
 SYMHDRFLOAT = $(ROOT)/usr/include/iso/float_iso.h
@@ -322,9 +326,10 @@ ROOTHDRS= $(HDRS:%=$(ROOT)/usr/include/%)  \
 	$(UUIDHDRS:%=$(ROOT)/usr/include/uuid/%)  \
 	$(RPCSVCHDRS:%=$(ROOT)/usr/include/rpcsvc/%)  \
 	$(RPCSVCPROTS:%=$(ROOT)/usr/include/rpcsvc/%)  \
-	$(PROTOHDRS:%=$(ROOT)/usr/include/protocols/%)
+	$(PROTOHDRS:%=$(ROOT)/usr/include/protocols/%) \
+	$(FMACHDRS:%=$(ROOT)/usr/include/fmac/%)
 
-DIRS= iso arpa audio rpcsvc protocols security uuid kerberosv5
+DIRS= iso arpa audio rpcsvc protocols security uuid kerberosv5 fmac
 ROOTDIRS= $(DIRS:%=$(ROOT)/usr/include/%)
 
 # check files really don't exist
@@ -355,6 +360,9 @@ kerberosv5/%.check:             kerberosv5/%.h
 uuid/%.check:		uuid/%.h
 	$(DOT_H_CHECK)
 
+fmac/%.check:		fmac/%.h
+	$(DOT_H_CHECK)
+
 # Note that the derived headers (rpcgen) are not checked at this time.  These
 # need work at the source level and rpcgen itself has a bug which causes a
 # cstyle violation.  Furthermore, there seems to be good reasons for the
@@ -370,7 +378,8 @@ CHECKHDRS= $(HDRS:%.h=%.check)  \
 	$(AUDIOHDRS:%.h=audio/%.check)  \
 	$(UUIDHDRS:%.h=uuid/%.check)  \
 	$(RPCSVC_SRC_HDRS:%.h=rpcsvc/%.check) \
-	$(PROTOHDRS:%.h=protocols/%.check)
+	$(PROTOHDRS:%.h=protocols/%.check) \
+	$(FMACHDRS:%.h=fmac/%.check)
 
 # headers which won't quite meet the standards...
 #
@@ -404,6 +413,9 @@ $(ROOT)/usr/include/iso/%: iso/%
 	$(INS.file)
 
 $(ROOT)/usr/include/uuid/%: uuid/%
+	$(INS.file)
+
+$(ROOT)/usr/innclude/fmac/%: fmac/%
 	$(INS.file)
 
 $(ROOT)/usr/include/%: %
