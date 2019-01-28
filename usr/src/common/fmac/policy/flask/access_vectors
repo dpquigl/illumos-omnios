@@ -1,0 +1,370 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#
+# Define common prefixes for access vectors
+#
+# common common_name { permission_name ... }
+
+
+#
+# Define a common prefix for file access vectors.
+#
+
+common file
+{
+	execute
+	write
+	read
+	append
+	file_dac_execute
+	file_dac_write
+	file_dac_read
+	file_flag_set
+	file_flag_clr
+	open
+	create
+	link
+	unlink
+	rename
+	getattr
+	setattr
+	lock
+	relabelfrom
+	relabelto
+	transition
+}
+
+
+#
+# Define a common prefix for socket access vectors.
+#
+
+common socket
+{
+# inherited from file
+	poll
+	ioctl
+	read
+	write
+	create
+	getattr
+	setattr
+	lock
+	relabelfrom
+	relabelto
+	transition
+	append
+# socket-specific
+	bind
+	connect
+	getopt
+	setopt
+	shutdown
+	recvfrom
+	sendto
+	recv_msg
+	send_msg
+	name_bind
+}	
+
+#
+# Define a common prefix for ipc access vectors.
+#
+
+common ipc
+{
+	create
+	destroy
+	getattr
+	setattr
+	read
+	write
+	associate
+}
+
+#
+# Define the access vectors.
+#
+# class class_name [ inherits common_name ] { permission_name ... }
+
+
+#
+# Define the access vector interpretation for file-related objects.
+#
+
+class filesystem
+{
+	mount
+	remount
+	unmount
+	getattr
+	relabelfrom
+	relabelto
+	transition
+	associate
+}
+
+class dir
+inherits file
+{
+	add_name
+	remove_name
+	reparent
+	search
+	file_dac_search
+	rmdir
+	mounton
+	mountassociate
+}
+
+class file
+inherits file
+{
+	execute_no_trans
+	entrypoint
+}
+
+class lnk_file
+inherits file
+
+class chr_file
+inherits file
+
+class blk_file
+inherits file
+
+class sock_file
+inherits file
+
+class fifo_file
+inherits file
+
+class pipe
+inherits file
+
+
+class fd
+{
+	create
+	getattr
+	setattr
+	inherit
+	receive
+}
+
+
+#
+# Define the access vector interpretation for network-related objects.
+#
+
+class socket
+inherits socket
+
+class tcp_socket
+inherits socket
+{
+	connectto
+	listen
+	accept
+	newconn
+	acceptfrom
+}
+
+class udp_socket
+inherits socket
+
+class rawip_socket
+inherits socket
+
+class node 
+{
+	tcp_recv
+	tcp_send
+	udp_recv
+	udp_send
+	rawip_recv
+	rawip_send
+	enforce_dest
+}
+
+class netif
+{
+	getattr
+	setattr
+	tcp_recv
+	tcp_send
+	udp_recv
+	udp_send
+	rawip_recv
+	rawip_send
+}
+
+class netlink_socket
+inherits socket
+
+class packet_socket
+inherits socket
+
+class unix_stream_socket
+inherits socket
+{
+	connectto
+	listen
+	accept
+	newconn
+	acceptfrom
+}
+
+class unix_dgram_socket
+inherits socket
+
+
+#
+# Define the access vector interpretation for process-related objects
+#
+
+class process
+{
+	fork
+	transition
+	info
+	sigchld
+	sigkill
+	sigstop
+	signal
+	ptrace
+	getsched
+	setsched
+	getcore
+	setcore
+	getsession
+	getpgid
+	setpgid
+	getattr
+	setexec
+	setfscreate
+	noprivinc
+}
+
+
+#
+# Define the access vector interpretation for ipc-related objects
+#
+
+class sem
+inherits ipc
+
+class msgq
+inherits ipc
+{
+	enqueue
+}
+
+class msg
+{
+	send
+	receive
+}
+
+class shm
+inherits ipc
+{
+	lock
+}
+
+
+#
+# Define the access vector interpretation for the security server. 
+#
+
+class security
+{
+	setenforce
+	load_policy
+	compute_av
+	compute_user
+	check_context
+}
+
+
+#
+# Define the access vector interpretation for system operations.
+#
+
+class system
+{
+	net_io_control
+	route_control
+	arp_control
+	rarp_control
+	ipc_info
+}
+
+#
+# Define the access vector interpretation for controling privileges
+#
+
+class capability
+{
+	# This will be converted to privilege at a later time.
+        # (Order matters)
+
+	chown           
+	dac_override    
+	dac_read_search 
+	fowner          
+	fsetid          
+	kill            
+	setgid           
+	setuid           
+	setpcap          
+	linux_immutable  
+	net_bind_service 
+	net_broadcast    
+	net_admin        
+	net_raw          
+	ipc_lock         
+	ipc_owner        
+	sys_module       
+	sys_rawio        
+	sys_chroot       
+	sys_ptrace       
+	sys_pacct        
+	sys_admin        
+	sys_boot         
+	sys_nice         
+	sys_resource     
+	sys_time         
+	sys_tty_config  
+	mknod
+	lease
+}
