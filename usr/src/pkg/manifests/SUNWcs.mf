@@ -51,6 +51,9 @@ dir path=etc/dev group=sys
 dir path=etc/devices group=sys
 dir path=etc/dfs group=sys
 dir path=etc/dhcp group=sys
+dir path=etc/fmac group=bin mode=0755
+dir path=etc/fmac/contexts group=sys mode=0755
+dir path=etc/fmac/users group=sys mode=0755
 dir path=etc/fs group=sys
 dir path=etc/fs/dev group=sys
 dir path=etc/fs/hsfs group=sys
@@ -424,6 +427,14 @@ file path=etc/security/dev/st1 mode=0400
 file path=etc/security/exec_attr group=sys preserve=true \
     timestamp=19700101T000000Z
 file path=etc/security/exec_attr.d/SUNWcs group=sys
+file path=etc/security/fmac/ss_policy group=sys mode=0644
+file path=etc/security/fmac/file_contexts group=sys mode=0644
+file path=etc/security/fmac/default_user group=sys mode=0644
+file path=etc/security/fmac/contexts/failsafe_context group=sys mode=0644
+file path=etc/security/fmac/contexts/default_contexts group=sys mode=0644
+file path=etc/security/fmac/contexts/default_type group=sys mode=0644
+file path=etc/security/fmac/contexts/users/user_u group=sys mode=0644
+file path=etc/security/fmac/contexts/users/sysadm_u group=sys mode=0644
 file path=etc/security/kmfpolicy.xml
 file path=etc/security/lib/audio_clean group=sys mode=0555
 file path=etc/security/lib/fd_clean group=sys mode=0555
@@ -630,6 +641,7 @@ file path=root/.profile group=root preserve=true
 file path=sbin/autopush mode=0555
 $(i386_ONLY)file path=sbin/biosdev mode=0555
 file path=sbin/bootadm mode=0555
+file path=sbin/checkpolicy mode=0555
 file path=sbin/cryptoadm mode=0555
 file path=sbin/devprop mode=0555
 file path=sbin/dhcpagent mode=0555
@@ -637,12 +649,15 @@ file path=sbin/dhcpinfo mode=0555
 file path=sbin/dlmgmtd mode=0555
 file path=sbin/fdisk mode=0555
 file path=sbin/fiocompress mode=0555
+file path=sbin/fmacsetup mode=0555
+file path=sbin/getenforce mode=0555
 file path=sbin/hostconfig mode=0555
 file path=sbin/ifconfig mode=0555
 file path=sbin/ifparse mode=0555
 file path=sbin/init group=sys mode=0555
 $(i386_ONLY)file path=sbin/installgrub group=sys mode=0555
 file path=sbin/ipmpstat mode=0555
+file path=sbin/loadpolicy mode=0555
 file path=sbin/mount mode=0555
 file path=sbin/mountall group=sys mode=0555
 file path=sbin/netstrategy mode=0555
@@ -653,6 +668,8 @@ file path=sbin/rc3 group=sys mode=0744
 file path=sbin/rcS group=sys mode=0744
 file path=sbin/route mode=0555
 file path=sbin/routeadm mode=0555
+file path=sbin/setenforce mode=0555
+file path=sbin/setfiles mode-0555
 file path=sbin/soconfig mode=0555
 file path=sbin/su.static group=sys mode=0555
 file path=sbin/sulogin mode=0555
