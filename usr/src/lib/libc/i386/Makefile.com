@@ -131,6 +131,7 @@ GENOBJS=			\
 	ecvt.o			\
 	endian.o		\
 	errlst.o		\
+	fmac_context.o	\
 	i386_data.o		\
 	ladd.o			\
 	ldivide.o		\
@@ -224,6 +225,7 @@ COMSYSOBJS=			\
 	fchdir.o		\
 	fchroot.o		\
 	fdsync.o		\
+	fmacsys.o		\
 	fpathconf.o		\
 	fstatfs.o		\
 	fstatvfs.o		\
@@ -429,10 +431,14 @@ PORTGEN=			\
 	fdetach.o		\
 	fdopendir.o		\
 	ffs.o			\
+	filecon.o		\
 	flock.o			\
 	fls.o			\
+	fmac_config.o	\
 	fmtmsg.o		\
 	freezero.o		\
+	freecon.o		\
+	freeconary.o	\
 	ftime.o			\
 	ftok.o			\
 	fts.o			\
@@ -446,6 +452,7 @@ PORTGEN=			\
 	getentropy.o		\
 	getenv.o		\
 	getexecname.o		\
+	getfmacuserbyname.o	\
 	getgrnam.o		\
 	getgrnam_r.o		\
 	gethostid.o		\
@@ -474,6 +481,8 @@ PORTGEN=			\
 	getwd.o			\
 	getwidth.o		\
 	getxby_door.o		\
+	get_context_list.o	\
+	get_default_type.o	\
 	gtxt.o			\
 	hsearch.o		\
 	iconv.o			\
@@ -560,6 +569,7 @@ PORTGEN=			\
 	rewinddir.o		\
 	rindex.o		\
 	scandir.o		\
+	security_compute_user.o	\
 	seekdir.o		\
 	select.o		\
 	set_constraint_handler_s.o \

@@ -173,6 +173,8 @@
 #include <xlocale.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fmac/fmac.h>
+#include <fmac/fmac_context.h>
 
 /*
  * This really comes from the crt*.s startup modules.

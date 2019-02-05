@@ -43,8 +43,11 @@
 static int (*nvpacker)(nvlist_t *, char **, size_t *, int, int);
 static int (*nvsize)(nvlist_t *, size_t *, int);
 static int (*nvunpacker)(char *, size_t, nvlist_t **);
+static int (*nvalloc)(nvlist_t **, uint_t, int);
 static int (*nvfree)(nvlist_t *);
 static int (*nvlookupint64)(nvlist_t *, const char *, uint64_t *);
+static int (*nvlookupstring)(nvlist_t *, const char *, char **);
+static int (*nvaddstring)(nvlist_t *, const char *, const char *);
 
 static mutex_t attrlock = DEFAULTMUTEX;
 static int initialized;
@@ -66,8 +69,11 @@ attrat_init()
 	void *packer;
 	void *sizer;
 	void *unpacker;
+	void *allocer;
 	void *freer;
 	void *looker;
+	void *lookupstr;
+	void *addstr;
 
 	if (initialized == 0) {
 		void *handle = dlopen("libnvpair.so.1", RTLD_LAZY);
@@ -76,8 +82,12 @@ attrat_init()
 		    (packer = dlsym(handle, "nvlist_pack")) == NULL ||
 		    (sizer = dlsym(handle, "nvlist_size")) == NULL ||
 		    (unpacker = dlsym(handle, "nvlist_unpack")) == NULL ||
-		    (freer = dlsym(handle, "nvlist_free")) == NULL ||
-		    (looker = dlsym(handle, "nvlist_lookup_uint64")) == NULL) {
+		    (allocer = dlsym(handle, "nvlist_alloc")) == NULL ||
+			(freer = dlsym(handle, "nvlist_free")) == NULL ||
+		    (looker = dlsym(handle, "nvlist_lookup_uint64")) == NULL ||
+		    (lookupstr = dlsym(handle, "nvlist_lookup_string"))
+		    == NULL ||
+		    (addstr = dlsym(handle, "nvlist_add_string")) == NULL) {
 			if (handle)
 				(void) dlclose(handle);
 			return (-1);
@@ -97,10 +107,16 @@ attrat_init()
 		    sizer;
 		nvunpacker = (int (*)(char *, size_t, nvlist_t **))
 		    unpacker;
+		nvalloc = (int (*)(nvlist_t **, uint_t, int))
+		    allocer;
 		nvfree = (int (*)(nvlist_t *))
 		    freer;
 		nvlookupint64 = (int (*)(nvlist_t *, const char *, uint64_t *))
 		    looker;
+		nvlookupstring = (int (*)(nvlist_t *, const char *, char **))
+		    lookupstr;
+		nvaddstring = (int (*)(nvlist_t *, const char *, const char *))
+		    addstr;
 
 		membar_producer();
 		initialized = 1;
@@ -307,6 +323,15 @@ setattrat(int basefd, xattr_view_t view, const char *name, nvlist_t *request)
 	return (error);
 }
 
+int
+libc_nvlist_alloc(nvlist_t **nvp, uint_t nvflag, int flag)
+{
+	if (attrat_init())
+		return (errno ? errno : EINVAL);
+
+	return (nvalloc(nvp, nvflag, flag));
+}
+
 void
 libc_nvlist_free(nvlist_t *nvp)
 {
@@ -317,4 +342,16 @@ int
 libc_nvlist_lookup_uint64(nvlist_t *nvp, const char *name, uint64_t *value)
 {
 	return (nvlookupint64(nvp, name, value));
+}
+
+int
+libc_nvlist_lookup_string(nvlist_t *nvp, const char *name, char **value)
+{
+	return (nvlookupstring(nvp, name, value));
+}
+
+int
+libc_nvlist_add_string(nvlist_t *nvp, const char *name, const char *value)
+{
+	return (nvaddstring(nvp, name, value));
 }

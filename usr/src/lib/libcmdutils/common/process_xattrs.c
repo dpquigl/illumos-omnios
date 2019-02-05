@@ -283,15 +283,17 @@ sysattr_list(char *cmd, int fd, char *fname)
 		    cmd, fname);
 		return (NULL);
 	}
-	pair = NULL;
-	while ((pair = nvlist_next_nvpair(response, pair)) != NULL) {
+	
+	pair = nvlist_next_nvpair(response, NULL);
+	while (pair != NULL) {
+		nvpair_t *next = nvlist_next_nvpair(response, pair);
 
 		name = nvpair_name(pair);
 
 		if (name != NULL)
 			fattr = name_to_attr(name);
 		else
-			return (response);
+			goto next;
 
 		type = nvpair_type(pair);
 		switch (type) {
@@ -302,21 +304,34 @@ sysattr_list(char *cmd, int fd, char *fname)
 					    dgettext(TEXT_DOMAIN, "%s "
 					    "nvpair_value_boolean_value "
 					    "failed\n"), cmd);
-					continue;
+					goto next;
 				}
 				if (value && fattr != F_ARCHIVE &&
 				    fattr != F_AV_MODIFIED)
-					return (response);
+					goto next;
 				break;
 			case DATA_TYPE_UINT64_ARRAY:
 				if (fattr != F_CRTIME)
-					return (response);
+					goto next;
 				break;
 			case DATA_TYPE_NVLIST:
 			default:
-				return (response);
+				goto next;
 		}
+
+		/* Remove any default attributes. */
+		(void) nvlist_remove(response, name, type);
+
+next:
+		pair = next;
 	}
-	nvlist_free(response);
+
+	/* If non-empty, return the response. */
+	pair = nvlist_next_nvpair(response, NULL);
+	if (pair)
+		return (response);
+
+	if (response != NULL)
+		nvlist_free(response);
 	return (NULL);
 }

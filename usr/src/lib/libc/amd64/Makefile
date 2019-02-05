@@ -121,6 +121,14 @@ GENOBJS=			\
 	ecvt.o			\
 	endian.o		\
 	errlst.o		\
+	filecon.o		\
+	fmac_config.o		\
+	fmac_context.o		\
+	freecon.o		\
+	freeconary.o		\
+	get_context_list.o	\
+	get_default_type.o	\
+	getfmacuserbyname.o	\
 	amd64_data.o		\
 	ldivide.o		\
 	lock.o			\
@@ -133,6 +141,7 @@ GENOBJS=			\
 	new_list.o		\
 	proc64_id.o		\
 	proc64_support.o	\
+	security_compute_user.o \
 	setjmp.o		\
 	siginfolst.o		\
 	siglongjmp.o		\
@@ -895,6 +904,7 @@ PORTSYS=			\
 	execv.o			\
 	eventfd.o		\
 	fcntl.o			\
+	fmacsys.o		\
 	getpagesizes.o		\
 	getpeerucred.o		\
 	inotify.o		\

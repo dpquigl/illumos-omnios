@@ -20,7 +20,7 @@
 #
 
 #
-# Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2009, 2010, Oracle and/or its affiliates. All rights reserved.
 # Copyright 2018 Nexenta Systems, Inc.
 # Copyright (c) 2012 by Delphix. All rights reserved.
 # Copyright 2018 Joyent, Inc.
@@ -476,18 +476,45 @@ $endif
 	fls;
 	flsl;
 	flsll;
+	fmac_context_free;
+	fmac_context_new;
+	fmac_context_range_get;
+	fmac_context_range_set;
+	fmac_context_role_get;
+	fmac_context_role_set;
+	fmac_context_str;
+	fmac_context_type_get;
+	fmac_context_type_set;
+	fmac_context_user_get;
+	fmac_context_user_set;
 	forkallx;
 	forkx;
+	freecon;
+	freeconary;
 	fsetattr;
 	getattrat;
+	getcon;
 	getdelim;
+	getexeccon;
+	getfilecon;
+	getfmacuserbyname;	
 	getline;
+	get_default_type;
+	get_default_context;
+	get_default_context_with_level;
+	get_default_context_with_role;
+	get_default_context_with_rolelevel;
 	get_nprocs;
 	get_nprocs_conf;
+	get_ordered_context_list;
+	get_ordered_context_list_with_level;
+	getpidcon;
+	getprevcon;
 	getprogname;
 	htonl;
 	htonll;
 	htons;
+	is_fmac_enabled;
 	linkat;
 	lio_listio;
 	memmem;
@@ -535,6 +562,12 @@ $endif
 	sched_setparam;
 	sched_setscheduler;
 	sched_yield;
+	security_check_context;
+	security_compute_av;
+	security_compute_user;
+	security_getenforce;
+	security_load_policy;
+	security_setenforce;
 	sem_close;
 	sem_destroy;
 	sem_getvalue;
@@ -548,6 +581,8 @@ $endif
 	sem_wait;
 	setattrat;
 	setprogname;
+	setexeccon;
+	setfilecon;
 	_sharefs;
 	shm_open;
 	shm_unlink;

@@ -368,7 +368,8 @@ static const char *const systable[] = {
 	"lwp_mutex_register",	/* 252 */
 	"cladm",		/* 253 */
 	"uucopy",		/* 254 */
-	"umount2"		/* 255 */
+	"umount2",		/* 255 */
+	"fmacsys"		/* 256 */
 };
 
 /* SYSEND == max syscall number + 1 */

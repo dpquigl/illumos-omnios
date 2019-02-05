@@ -31,6 +31,7 @@
 #include <auth_attr.h>
 #include <deflt.h>
 #include <priv.h>
+#include <fmac/fmac.h>
 #include <secdb.h>
 #include <user_attr.h>
 #include <sys/task.h>
@@ -193,6 +194,9 @@ pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	struct passwd	pwd;
 	char		pwbuf[NSS_BUFLEN_PASSWD];
 	deflim_t	deflim;
+	security_context_t newcon = NULL;
+	char		*fmac_user = NULL;
+	char		*fmac_level = NULL;
 
 	for (i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "debug") == 0)
@@ -656,6 +660,53 @@ adt_done:
 	 */
 	(void) setpflags(PRIV_PFEXEC, 0);
 
+	if (is_fmac_enabled() > 0) {
+
+		if (flags & PAM_ESTABLISH_CRED) {
+
+			if (getfmacuserbyname(user, &fmac_user,
+			    &fmac_level) != 0) {
+				syslog(LOG_AUTH | LOG_ERR,
+				    "pam_setcred: can't determine fmac "
+				    "user for: %s", user);
+					ret = PAM_CRED_ERR;
+				goto out;
+			}
+
+			if (get_default_context_with_level(fmac_user,
+			    fmac_level, NULL, &newcon) != 0) {
+				syslog(LOG_AUTH | LOG_ERR,
+				    "pam_setcred: can't determine fmac user");
+				ret = PAM_CRED_ERR;
+				goto out;
+			}
+		} else
+			goto out;
+
+		if (security_check_context(newcon) != 0) {
+			syslog(LOG_AUTH | LOG_ERR,
+			    "pam_setcred: invalid context: %s",
+			    newcon);
+			ret = PAM_CRED_ERR;
+			goto out;
+		}
+
+		if (setexeccon(newcon) != 0) {
+			if (security_getenforce() == 1) {
+				/* Enforcing - return an error */
+				syslog(LOG_AUTH | LOG_ERR,
+				    "pam_setcred: setexeccon failed for: %s",
+				    newcon);
+				ret = PAM_CRED_ERR;
+				goto out;
+			} else {
+				/* Permissive - log the error */
+				syslog(LOG_AUTH | LOG_ERR,
+				    "pam_setcred: setexeccon failed for: %s",
+				    newcon);
+			}
+		}
+	}
 out:
 	free(deflim.lim);
 	free(deflim.def);
@@ -666,6 +717,12 @@ out:
 		priv_freeset(def);
 	if (tset != NULL)
 		priv_freeset(tset);
+	if (newcon != NULL)
+		freecon(newcon);
+	if (fmac_user != NULL)
+		free(fmac_user);
+	if (fmac_level != NULL)
+		free(fmac_level);
 
 	return (ret);
 }
