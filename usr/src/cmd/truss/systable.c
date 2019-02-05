@@ -478,6 +478,7 @@ const struct systable systable[] = {
 {"cladm",	3, DEC, NOV, CLC, CLF, HEX},			/* 253 */
 {"uucopy",	3, DEC, NOV, HEX, HEX, UNS},			/* 254 */
 {"umount2",	2, DEC, NOV, STG, MTF},				/* 255 */
+{"fmacsys", 6, UNS, UNS, DEC, HEX, HEX, HEX, HEX, HEX}. /* 256 */
 { NULL, -1, DEC, NOV},
 };
 
@@ -924,6 +925,21 @@ const	struct systable sockconfigtable[] = {
 };
 #define	NSOCKCONFIGCODE	(sizeof (sockconfigtable) / sizeof (struct systable))
 
+const	struct systable fmacsystable[] = {
+{"security_getenforce",		1, DEC, NOV, HID},		/* 0 */
+{"security_setenforce",		2, DEC, NOV, HID, DEC},		/* 1 */
+{"security_load_policy",	2, UNS, UNS, HID, STG},		/* 2 */
+{"is_fmac_enabled",		1, DEC, NOV, HID},		/* 3 */
+{"security_compute_av",	6, DEC, NOV, HID, STG, STG, DEC, DEC, HEX}, /* 4 */
+{"security_check_context",	2, DEC, NOV, HID, STG},		/* 5 */
+{"getcon",			2, DEC, NOV, HID, RST},		/* 6 */
+{"getpidcon",			3, DEC, NOV, HID, DEC, RST},	/* 7 */
+{"getexeccon",			2, DEC, NOV, HID, RST},		/* 8 */
+{"setexeccon",			2, DEC, NOV, HID, STG},		/* 9 */
+{"getprevcon",			2, DEC, NOV, HID, RST},		/* 10 */
+};
+#define	NFMACSYSCODE	(sizeof (fmacsystable) / sizeof (struct systable))
+
 const	struct sysalias sysalias[] = {
 	{ "exit",	SYS_exit	},
 	{ "fork",	SYS_forksys	},
@@ -1078,6 +1094,17 @@ const	struct sysalias sysalias[] = {
 	{ "poll",		SYS_pollsys	},
 	{ "umount",		SYS_umount2	},
 	{ "wait",		SYS_waitid	},
+	{ "security_getenforce", SYS_fmacsys	},
+	{ "security_setenforce", SYS_fmacsys	},
+	{ "security_load_policy", SYS_fmacsys	},
+	{ "is_fmac_enabled",	SYS_fmacsys	},
+	{ "security_compute_av", SYS_fmacsys	},
+	{ "security_check_context", SYS_fmacsys	},
+	{ "getcon",		SYS_fmacsys	},
+	{ "getpidcon",		SYS_fmacsys	},
+	{ "getexeccon",		SYS_fmacsys	},
+	{ "setexeccon",		SYS_fmacsys	},
+	{ "getprevcon",		SYS_fmacsys	},
 	{  NULL,	0	}	/* end-of-list */
 };
 
@@ -1282,6 +1309,10 @@ subsys(int syscall, int subcode)
 		case SYS_sockconfig:	/* sockconfig family */
 			if ((unsigned)subcode < NSOCKCONFIGCODE)
 				stp = &sockconfigtable[subcode];
+			break;
+		case SYS_fmacsys:	/* FMAC family */
+			if ((unsigned)subcode < NFMACSYSCODE)
+				stp = &fmacsystable[subcode];
 			break;
 		}
 	}
@@ -1495,6 +1526,7 @@ getsubcode(private_t *pri)
 		case SYS_sidsys:	/* sidsys */
 		case SYS_utimesys:	/* utimesys */
 		case SYS_sockconfig:	/* sockconfig */
+		case SYS_fmacsys:	/* fmacsys */
 			subcode = arg0;
 			break;
 		case SYS_fcntl:		/* fcntl() */
@@ -1572,7 +1604,8 @@ maxsyscalls()
 	    + NFORKCODE - 1
 	    + NSIDSYSCODE - 1
 	    + NUTIMESYSCODE - 1
-	    + NSOCKCONFIGCODE - 1);
+	    + NSOCKCONFIGCODE - 1
+		+ NFMACSYSCODE - 1);
 }
 
 /*
@@ -1678,6 +1711,8 @@ nsubcodes(int syscall)
 		return (NUTIMESYSCODE);
 	case SYS_sockconfig:
 		return (NSOCKCONFIGCODE);
+	case SYS_fmacsys:
+		return (NFMACSYSCODE);
 	default:
 		return (1);
 	}

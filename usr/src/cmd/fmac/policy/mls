@@ -1,0 +1,302 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+# Define sensitivities 
+#
+# Each sensitivity has a name and zero or more aliases.
+
+sensitivity unclassified alias u;
+sensitivity confidential alias c;
+sensitivity secret alias s;
+sensitivity top_secret alias ts;
+
+# Define the ordering of the sensitivity levels (least to greatest)
+dominance { u c s ts }
+
+# Define the categories
+#
+# Each category has a name and zero or more aliases.
+#
+
+category nocon;
+category noforn;
+category nato;
+category usuk;
+
+# Identify which categories may be associated with which sensitivities
+#
+# Each MLS level specifies a sensitivity and zero or more categories which may
+# be associated with that sensitivity.
+
+level u; 
+level c;
+level s:nocon, noforn;
+level ts:nocon, noforn, nato, usuk;
+
+#
+# Map each permission to a set of MLS base permissions.
+#
+
+common file
+{
+	execute		:	read
+	write		:	write
+	read		:	read
+	append		:	write
+	open		:	read
+	create		:	write
+	link		:	write
+	unlink		:	write
+	rename		:	write
+	getattr		:	read
+	setattr		:	write
+	lock		:	none
+	relabelfrom	:	{ read write }
+	relabelto	:	write
+	transition	:	write
+}
+
+common socket
+{
+	poll		:	none
+	ioctl		:	none
+	read		:	none
+	write		:	none
+	create		:	write
+	getattr		:	none
+	setattr		:	none
+	lock		:	none
+	relabelfrom	:	{ read write }
+	relabelto	:	write
+	transition	:	write
+	append		:	none
+	bind		:	write
+	connect		:	write
+	getopt		:	none
+	setopt		:	none
+	shutdown	:	none
+	recvfrom	:	read
+	sendto		:	none
+	recv_msg	:	read
+	send_msg	:	write
+	name_bind	:	none
+}	
+
+common ipc
+{
+	create		:	write
+	destroy		:	{ read write }
+	getattr		:	read
+	setattr		:	{ read write }
+	read		:	{ read write }
+	write		:	write
+	associate	:	none
+}
+
+class filesystem
+{
+	mount		:	none
+	remount		:	none
+	unmount		:	none
+	getattr		:	none
+	relabelfrom	:	none
+	relabelto	:	none
+	transition	:	none
+	associate	:	readby
+}
+
+class dir
+{
+	add_name	:	write	
+	remove_name	:	write
+	reparent	:	write
+	search		:	read
+	rmdir		:	{ read write }
+	mounton		:	none
+	mountassociate	:	none
+}
+
+class file
+{
+	execute_no_trans	: read
+	entrypoint	: read
+}
+
+class lnk_file
+class chr_file
+class blk_file
+class sock_file
+class fifo_file
+class pipe
+
+class fd
+{
+	create		:	write
+	getattr		:	none
+	setattr		:	none
+	inherit		: 	none
+	receive		:	none
+}
+
+class socket
+
+class tcp_socket
+{
+	connectto 	:	none
+	listen		:	write
+	accept		:	read
+	newconn 	:	write
+        acceptfrom 	:	read
+}
+
+class udp_socket
+class rawip_socket
+
+class node 
+{
+	tcp_recv 	:	readby
+	tcp_send	:	writeby
+	udp_recv 	:	readby
+	udp_send	:	writeby
+	rawip_recv	:	readby
+	rawip_send	:	writeby
+	enforce_dest	:	none
+}
+
+class netif
+{
+	getattr		:	none
+	setattr		:	write
+	tcp_recv 	:	readby
+	tcp_send	:	writeby
+	udp_recv 	:	readby
+	udp_send	:	writeby
+	rawip_recv 	:	readby
+	rawip_send	:	writeby
+}
+
+class netlink_socket
+class packet_socket
+class unix_dgram_socket
+
+class unix_stream_socket
+{
+	connectto 	:	none
+	listen		:	write
+	accept		:	read
+	newconn 	:	write
+        acceptfrom 	:	read
+}
+
+
+class process
+{
+	fork		:	none
+	transition	:	write
+	sigchld		:	readby
+	sigkill		:	write
+	sigstop		:	write
+	signal		:	write
+	ptrace		:	{ read write }
+	getsched	:	read
+	setsched	:	write
+	getsession	:	read
+	getpgid		:	read
+	setpgid		:	write
+	setexec		:	write
+	setfscreate	:	write
+	noprivinc	:	none
+}
+
+class sem
+
+class msgq
+{
+	enqueue		:	write
+}
+
+class msg
+{
+	send		:	{ write }
+	receive		:	{ read }
+}
+
+class shm
+{
+	lock		:	{ write }
+}
+
+class security
+{
+	setenforce		:	none
+	load_policy		:	none
+	compute_av		:	none
+	check_context		:	none
+}
+
+class system
+{
+	net_io_control		:	none
+	route_control		:	none
+	arp_control		: 	none
+	rarp_control		: 	none
+	ipc_info		:	read
+}
+
+class capability
+{
+
+	# This will be converted to privilege at a later time.
+	# (Order matters)
+
+	chown           	: 	none
+	dac_override    	: 	none
+	dac_read_search 	: 	none
+	fowner          	: 	none
+	fsetid          	: 	none
+	kill            	: 	none
+	setgid          	: 	none 
+	setuid          	: 	none 
+	setpcap         	: 	none 
+	linux_immutable 	: 	none 
+	net_bind_service	: 	none 
+	net_broadcast   	: 	none 
+	net_admin       	: 	none 
+	net_raw         	: 	none 
+	ipc_lock        	: 	none 
+	ipc_owner       	: 	none 
+	sys_module      	: 	none 
+	sys_rawio       	: 	none 
+	sys_chroot      	: 	none 
+	sys_ptrace      	: 	none 
+	sys_pacct       	: 	none 
+	sys_admin       	: 	none 
+	sys_boot        	: 	none 
+	sys_nice        	: 	none 
+	sys_resource    	: 	none 
+	sys_time        	: 	none 
+	sys_tty_config  	: 	none
+}

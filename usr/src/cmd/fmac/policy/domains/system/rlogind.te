@@ -1,0 +1,69 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the rlogind_t domain.
+#
+type rlogind_t, domain, privlog, auth;
+type rlogind_exec_t, file_type, sysadmfile, exec_type;
+
+type rlogind_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(rlogind_t, tmp_t, rlogind_tmp_t)
+
+# Inherit and use descriptors from inetd.
+allow rlogind_t inetd_t:fd inherit_fd_perms;
+
+# Use sockets inherited from inetd.
+allow rlogind_t inetd_t:tcp_socket rw_stream_socket_perms;
+
+# Use capabilities.
+allow rlogind_t rlogind_t:capability { net_bind_service setuid setgid fowner fsetid chown dac_override };
+
+# Perform socket ioctl.
+allow rlogind_t kernel_t:system net_io_control;
+
+# Use the network.
+can_network(rlogind_t)
+
+# Run login in remote_login_t.
+domain_auto_trans(rlogind_t, login_exec_t, remote_login_t)
+
+# Send SIGCHLD to inetd on death.
+allow rlogind_t inetd_t:process sigchld;
+
+# Create ptys.
+can_create_pty(rlogind)
+
+# Modify /var/run/utmp.
+allow rlogind_t initrc_var_run_t:file rw_file_perms;
+
+# Modify /var/log/wtmp.
+allow rlogind_t wtmp_t:file rw_file_perms;
+
+# Read /etc/shadow.
+allow rlogind_t shadow_t:file r_file_perms;
+

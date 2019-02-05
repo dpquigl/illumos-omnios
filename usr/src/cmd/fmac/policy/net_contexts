@@ -1,0 +1,66 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#
+# Security contexts for network entities
+# If no context is specified, then a default initial SID is used.
+#
+
+#
+# Port numbers (default = initial SID 'port')
+# 
+# protocol number context
+# protocol low-high context
+#
+portcon tcp 21 system_u:object_r:ftp_port_t
+portcon tcp 23 system_u:object_r:telnet_port_t
+portcon tcp 25 system_u:object_r:smtp_port_t
+portcon tcp 80  system_u:object_r:http_port_t
+portcon tcp 513 system_u:object_r:rlogin_port_t
+portcon tcp 514 system_u:object_r:rsh_port_t
+portcon tcp 515 system_u:object_r:printer_port_t
+portcon tcp 8080  system_u:object_r:http_port_t
+
+
+# Network interfaces (default = initial SID 'netif' and 'netmsg')
+#
+# interface netif_context default_msg_context
+#
+netifcon lo system_u:object_r:netif_lo_t system_u:object_r:netmsg_lo_t
+netifcon eth0 system_u:object_r:netif_eth0_t system_u:object_r:netmsg_eth0_t
+netifcon eth1 system_u:object_r:netif_eth1_t system_u:object_r:netmsg_eth1_t
+
+
+# Nodes (default = initial SID 'node')
+#
+# address mask context
+#
+# The first matching entry is used.
+#
+nodecon 127.0.0.1 255.255.255.255 system_u:object_r:node_lo_t
+nodecon 144.51.25.0 255.255.255.0 system_u:object_r:node_internal_t
+
+# FLASK

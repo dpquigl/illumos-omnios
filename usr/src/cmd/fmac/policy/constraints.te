@@ -1,0 +1,77 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#
+# Define m4 macros for the constraints
+#
+
+#
+# Define the constraints
+#
+# constrain class_set perm_set expression ;
+#
+# expression : ( expression ) 
+#	     | not expression
+#	     | expression and expression
+#	     | expression or expression
+#	     | u1 op u2
+#	     | r1 role_op r2
+#	     | t1 op t2
+#	     | u1 op names
+#	     | u2 op names
+#	     | r1 op names
+#	     | r2 op names
+#	     | t1 op names
+#	     | t2 op names
+#
+# op : == | != 
+# role_op : == | != | eq | dom | domby | incomp
+#
+# names : name | { name_list }
+# name_list : name | name_list name#		
+#
+
+#
+# Restrict the ability to transition to other users
+# or roles to a few privileged types.
+#
+
+constrain process transition 
+	( u1 == u2 or t1 == privuser );
+
+constrain process transition 
+	( r1 == r2 or t1 == privrole) ;
+
+#
+# Restrict the ability to label objects with other
+# user identities to a few privileged types.
+#
+
+constrain dir_file_class_set { create relabelto relabelfrom } 
+	( u1 == u2 or t1 == privowner );
+
+constrain socket_class_set { create relabelto relabelfrom } 
+	( u1 == u2 or t1 == privowner );

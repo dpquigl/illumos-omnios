@@ -1,0 +1,194 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#
+# Declarations for type attributes.
+# 
+
+# A type attribute can be used to identify a set of types with a similar
+# property.  Each type can have any number of attributes, and each
+# attribute can be associated with any number of types.  Attributes are
+# explicitly declared here, and can then be associated with particular
+# types in type declarations.  Attribute names can then be used throughout 
+# the configuration to express the set of types that are associated with 
+# the attribute.  Except for the MLS attributes, attributes have no implicit
+# meaning to SELinux.  The meaning of all other attributes are completely 
+# defined through their usage within the configuration, but should be 
+# documented here as comments preceding the attribute declaration.  
+
+#####################
+# Attributes for MLS:
+#
+
+# The mlstrustedreader attribute identifies every domain that can
+# override the normal MLS restrictions on reading (i.e. domains
+# that can read up).  
+attribute mlstrustedreader;
+
+# The mlstrustedwriter attribute identifies every domain that can
+# override the normal MLS restrictions on writing (i.e. domains
+# that can write down).  
+attribute mlstrustedwriter;
+
+# The mlstrustedobject attribute identifies every type that can
+# be accessed without normal MLS restrictions (i.e. processes can
+# read or write objects with this type regardless of MLS level).  
+# Examples:  /dev/null, descriptors created by login
+attribute mlstrustedobject;
+
+
+#########################
+# Attributes for domains:
+#
+
+# The domain attribute identifies every type that can be 
+# assigned to a process.  This attribute is used in TE rules 
+# that should be applied to all domains, e.g. permitting 
+# init to kill all processes or permitting all processes
+# to read a particular file.
+attribute domain;
+
+# The privuser attribute identifies every domain that can 
+# change its SELinux user identity.  This attribute is used 
+# in the constraints configuration.  NOTE:  This attribute
+# is not required for domains that merely change the Linux
+# uid attributes, only for domains that must change the
+# SELinux user identity.
+attribute privuser;
+
+# The privrole attribute identifies every domain that can 
+# change its SELinux role.  This attribute is used in the 
+# constraints configuration.
+attribute privrole;
+
+# The privowner attribute identifies every domain that can 
+# assign a different SELinux user identity to a file.  This 
+# attribute is used in the constraints configuration.
+attribute privowner;
+
+# The privlog attribute identifies every domain that can 
+# communicate with syslogd through its Unix domain socket.
+# This attribute is used in the TE rules in 
+# domains/program/syslogd.te to grant such access.  
+attribute privlog;
+
+# The privmem attribute identifies every domain that can 
+# access kernel memory devices.
+# This attribute is used in the TE assertions to verify
+# that such access is limited to domains that are explicitly
+# tagged with this attribute.
+attribute privmem;
+
+# The auth attribute identifies every domain that needs
+# to perform user authentication and requires access to
+# the corresponding authentication data.  
+attribute auth;
+
+# The admin attribute identifies every administrator domain.
+# It is used in TE assertions when verifying that only authorized 
+# domains have certain permissions.  
+attribute admin;
+
+# The userdomain attribute identifies every user domain, presently
+# user_t and sysadm_t.  It is used in TE rules that should be applied
+# to all user domains.
+attribute userdomain;
+
+############################
+# Attributes for file types:
+#
+
+# The file_type attribute identifies all types assigned to files 
+# in persistent filesystems.  It is used in TE rules to permit
+# the association of all such file types with persistent filesystem
+# types, and to permit certain domains to access all such types as 
+# appropriate.
+attribute file_type;
+
+# The sysadmfile attribute identifies all types assigned to files 
+# that should be completely accessible to administrators.  It is used
+# in TE rules to grant such access for administrator domains.
+attribute sysadmfile;
+
+# The fs_type attribute identifies all types assigned to filesystems
+# (not limited to persistent filesystems).
+# It is used in TE rules to permit certain domains to mount
+# any filesystem and to permit most domains to obtain the
+# overall filesystem statistics.
+attribute fs_type;
+
+# The root_dir_type attribute identifies all types assigned to 
+# root directories of filesystems (not limited to persistent
+# filesystems).
+attribute root_dir_type;
+
+# The exec_type attribute identifies all types assigned
+# to entrypoint executables for domains.  This attribute is 
+# used in TE rules and assertions that should be applied to all 
+# such executables.
+attribute exec_type;
+
+# The tmpfile attribute identifies all types assigned to temporary 
+# files.  This attribute is used in TE rules to grant certain 
+# domains the ability to remove all such files (e.g. init, crond).
+attribute tmpfile;
+
+# The home_type attribute identifies all types assigned to home
+# directories.  This attribute is used in TE rules to grant certain
+# domains the ability to access all home directory types.
+attribute home_type;
+
+# The pidfile attribute identifies all types assigned to pid files.
+# It is used in TE rules to grant certain domains the ability to
+# access all such files.
+attribute pidfile;
+
+
+############################
+# Attributes for network types:
+#
+
+# The socket_type attribute identifies all types assigned to 
+# kernel-created sockets.  Ordinary sockets are assigned the 
+# domain of the creating process.
+attribute socket_type;
+
+# Identifies all types assigned to port numbers to control binding.
+attribute port_type;
+
+# Identifies all types assigned to network interfaces to control
+# operations on the interface (obsolete) and to control traffic
+# sent or received on the interface.
+attribute netif_type;
+
+# Identifies all default types assigned to packets received 
+# on network interfaces.  
+attribute netmsg_type;
+
+# Identifies all types assigned to network nodes/hosts to control
+# traffic sent to or received from the node.
+attribute node_type;
+

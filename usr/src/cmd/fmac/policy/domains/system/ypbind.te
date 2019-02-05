@@ -1,0 +1,57 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the ypbind_t domain.
+#
+type ypbind_t, domain, privlog;
+type ypbind_exec_t, file_type, sysadmfile, exec_type;
+
+type ypbind_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(ypbind_t, tmp_t, ypbind_tmp_t)
+type ypbind_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(ypbind_t, var_run_t, ypbind_var_run_t)
+
+# Use capabilities.
+allow ypbind_t ypbind_t:capability net_bind_service;
+
+# Inherit and use descriptors from init.
+allow ypbind_t init_t:fd inherit_fd_perms;
+
+# Use the network.
+can_network(ypbind_t)
+
+# Send to portmap and initrc.
+can_udp_send(ypbind_t, portmap_t)
+can_udp_send(ypbind_t, initrc_t)
+
+# Use net ioctls.
+allow ypbind_t kernel_t:system net_io_control;
+
+# Read and write /var/yp.
+allow ypbind_t var_yp_t:dir rw_dir_perms;
+allow ypbind_t var_yp_t:file create_file_perms;

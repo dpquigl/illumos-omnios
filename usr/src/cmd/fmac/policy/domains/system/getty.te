@@ -1,0 +1,53 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the getty_t domain.
+#
+type getty_t, domain, privlog;
+type getty_exec_t, file_type, sysadmfile, exec_type;
+
+type getty_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(getty_t, tmp_t, getty_tmp_t)
+
+# Use capabilities.
+allow getty_t getty_t:capability { chown sys_tty_config };
+
+# Inherit and use descriptors from init.
+allow getty_t init_t:fd inherit_fd_perms;
+
+# Run login in local_login_t domain.
+domain_auto_trans(getty_t, login_exec_t, local_login_t)
+
+# Write to /var/run/utmp.
+allow getty_t initrc_var_run_t:file rw_file_perms;
+
+# Write to /var/log/wtmp.
+allow getty_t wtmp_t:file rw_file_perms;
+
+# Read and write ttys.
+allow getty_t tty_device_t:chr_file rw_file_perms;

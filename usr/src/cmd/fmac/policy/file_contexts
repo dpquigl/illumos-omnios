@@ -1,0 +1,502 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#
+# This file describes the security contexts to be applied to files
+# when the security policy is installed.  The setfiles program
+# reads this file and labels files accordingly.
+#
+# Each specification has the form:
+#       regexp [ -type ] ( context | <<none>> )
+#
+# By default, the regexp is an anchored match on both ends (i.e. a 
+# caret (^) is prepended and a dollar sign ($) is appended automatically).
+# This default may be overridden by using .* at the beginning and/or
+# end of the regular expression.  
+#
+# The optional type field specifies the file type as shown in the mode
+# field by ls, e.g. use -d to match only directories or -- to match only
+# regular files.
+# 
+# The value of <<none> may be used to indicate that matching files
+# should not be relabeled.
+#
+# The last matching specification is used.
+#
+# If there are multiple hard links to a file that match 
+# different specifications and those specifications indicate
+# different security contexts, then a warning is displayed
+# but the file is still labeled based on the last matching
+# specification other than <<none>>.
+#
+# Some of the files listed here get re-created during boot and therefore
+# need type transition rules to retain the correct type. These files are
+# listed here anyway so that if the setfiles program is used on a running
+# system it doesn't relabel them to something we don't want. An example of
+# this is /var/run/utmp.
+#
+
+#
+# The security context for all files not otherwise specified.
+#
+/.*				system_u:object_r:default_t
+
+#
+# The root directory.
+#
+/				system_u:object_r:root_t
+
+# 
+# The superuser home directory.
+#
+/root(/.*)?			system_u:object_r:sysadm_home_t
+
+# 
+# Other user home directories.
+#
+/home(/.*)?			system_u:object_r:user_home_t
+/export/home(/.*)?		system_u:object_r:user_home_t
+
+#
+# /boot
+#
+/boot(/.*)?			system_u:object_r:boot_t
+
+#
+# /dev 
+#
+/dev(/.*)?			system_u:object_r:device_t
+/dev/null			system_u:object_r:null_device_t
+/dev/zero			system_u:object_r:zero_device_t
+/dev/console			system_u:object_r:console_device_t
+/dev/(kmem|mem|port)		system_u:object_r:memory_device_t
+/dev/random			system_u:object_r:random_device_t
+/dev/urandom			system_u:object_r:random_device_t
+/dev/[^/]*tty[^/]*		system_u:object_r:tty_device_t
+/dev/vcs[^/]*			system_u:object_r:tty_device_t
+/dev/tty			system_u:object_r:devtty_t
+/dev/sd[^/]*			system_u:object_r:fixed_disk_device_t
+/dev/hd[^/]*			system_u:object_r:fixed_disk_device_t
+/dev/scd[^/]*			system_u:object_r:removable_device_t
+/dev/fd[^/]*			system_u:object_r:removable_device_t
+/dev/rtc			system_u:object_r:clock_device_t
+/dev/initctl			system_u:object_r:initctl_t
+/dev/log			system_u:object_r:devlog_t
+/dev/printer			system_u:object_r:printer_t
+/dev/psaux			system_u:object_r:psaux_t
+/dev/gpmctl			system_u:object_r:gpmctl_t
+/dev/ptmx			system_u:object_r:ptmx_t
+/dev/sequencer			system_u:object_r:misc_device_t
+/dev/dsp.*			system_u:object_r:misc_device_t
+/dev/audio			system_u:object_r:misc_device_t
+/dev/cdrom			system_u:object_r:misc_device_t
+/dev/fb				system_u:object_r:misc_device_t
+/dev/apm_bios			system_u:object_r:apm_bios_t
+
+#
+# /etc
+#
+/etc(/.*)?			system_u:object_r:etc_t
+/etc/shadow			system_u:object_r:shadow_t
+/etc/security/fmac/ss_policy	system_u:object_r:policy_config_t
+/etc/aliases			system_u:object_r:etc_aliases_t
+/etc/mail(/.*)?			system_u:object_r:etc_mail_t
+/etc/mail/aliases		system_u:object_r:etc_aliases_t
+/etc/mail/aliases.db		system_u:object_r:etc_aliases_t
+/etc/cron.d(/.*)?		system_u:object_r:system_crond_script_t
+/etc/dhcp(/.*)?			system_u:object_r:etc_dhcp_t
+/etc/ssh/ssh_host_dsa_key       system_u:object_r:sshd_key_t
+/etc/ssh/ssh_host_rsa_key       system_u:object_r:sshd_key_t
+/etc/fs/dev/mount		system_u:object_r:bin_t
+/etc/fs/hsfs/mount		system_u:object_r:bin_t
+/etc/fs/nfs/mount		system_u:object_r:bin_t
+/etc/fs/ufs/mount		system_u:object_r:bin_t
+/etc/fs/zfs/mount		system_u:object_r:bin_t
+/etc/fs/zfs/umount		system_u:object_r:bin_t
+/etc/lib/lu.*\.so.*		system_u:object_r:lib_t
+/etc/lib/lu(/.*)?		system_u:object_r:bin_t
+
+#
+# /lib
+#
+/lib(/.*)?			system_u:object_r:lib_t
+/lib/svc/bin/svc.startd		system_u:object_r:initrc_exec_t
+/lib/svc/bin/svc.configd	system_u:object_r:initrc_exec_t
+/lib/ld.*\.so.*			system_u:object_r:ld_so_t
+
+#
+# /sbin
+#
+/sbin(/.*)?			system_u:object_r:bin_t
+/sbin/sh			system_u:object_r:shell_exec_t
+/sbin/jsh			system_u:object_r:shell_exec_t
+/sbin/pfsh			system_u:object_r:shell_exec_t
+/sbin/ifconfig			system_u:object_r:ifconfig_exec_t
+/sbin/dhcpagent			system_u:object_r:dhcp_exec_t
+/sbin/init		  	system_u:object_r:init_exec_t
+/sbin/sulogin			system_u:object_r:sulogin_exec_t
+
+#
+# /tmp
+#
+/tmp(/.*)?			system_u:object_r:tmp_t
+/tmp/orbit.*			system_u:object_r:user_tmp_t
+/tmp/.ICE-unix(/.*)?		system_u:object_r:user_tmp_t
+/tmp/.X11-unix(/.*)?		system_u:object_r:user_xserver_tmp_t
+/tmp/.X0-lock			system_u:object_r:user_xserver_tmp_t
+/tmp/.font-unix(/.*)?		system_u:object_r:xfs_tmp_t
+
+#
+# /usr
+#
+/usr(/.*)?			system_u:object_r:usr_t
+/usr/src(/.*)?			system_u:object_r:src_t
+/usr/tmp(/.*)?			system_u:object_r:tmp_t
+/usr/share/man(/.*)?		system_u:object_r:man_t
+/usr/apache/bin(/.*)?		system_u:object_r:bin_t
+/usr/apache/libexec(/.*)?	system_u:object_r:lib_t
+/usr/ast/bin(/.*)?		system_u:object_r:bin_t
+/usr/mysql/bin(/.*)?		system_u:object_r:bin_t
+/usr/mysql/lib(/.*)?		system_u:object_r:lib_t
+/usr/ruby/1.8/bin(/.*)?		system_u:object_r:bin_t
+/usr/ruby/1.8/lib(/.*)?		system_u:object_r:lib_t
+/usr/snadm/bin(/.*)?		system_u:object_r:bin_t
+/usr/snadm/lib(/.*)?		system_u:object_r:lib_t
+
+#
+# /usr/bin
+#
+/usr/bin(/.*)?			system_u:object_r:bin_t
+/usr/bin/login			system_u:object_r:login_exec_t
+/usr/bin/csh			system_u:object_r:shell_exec_t
+/usr/bin/pfcsh			system_u:object_r:shell_exec_t
+/usr/bin/tcsh			system_u:object_r:shell_exec_t
+/usr/bin/bash			system_u:object_r:shell_exec_t
+/usr/bin/ksh			system_u:object_r:shell_exec_t
+/usr/bin/(amd|sparcv).*/.*ksh93	system_u:object_r:shell_exec_t
+/usr/bin/pfksh			system_u:object_r:shell_exec_t
+/usr/bin/rksh			system_u:object_r:shell_exec_t
+/usr/bin/zsh			system_u:object_r:shell_exec_t
+/usr/bin/zsh-4.3.4		system_u:object_r:shell_exec_t
+/usr/bin/su			system_u:object_r:su_exec_t
+/usr/bin/ls			system_u:object_r:ls_exec_t
+/usr/bin/lpr			system_u:object_r:lpr_exec_t
+/usr/bin/lpq			system_u:object_r:lpr_exec_t
+/usr/bin/lprm			system_u:object_r:lpr_exec_t
+/usr/bin/crontab		system_u:object_r:crontab_exec_t
+/usr/bin/passwd			system_u:object_r:passwd_exec_t
+/usr/bin/newrole		system_u:object_r:newrole_exec_t
+
+#
+# /usr/ccs
+#
+/usr/ccs/bin(/.*)?                      system_u:object_r:bin_t
+/usr/ccs/lib(/.*)?                      system_u:object_r:lib_t
+
+
+#
+# /usr/lib
+#
+/usr/lib(/.*)?			system_u:object_r:lib_t
+/usr/lib/ssh/sshd		system_u:object_r:sshd_exec_t
+/usr/lib/inet/inetd		system_u:object_r:inetd_exec_t
+/usr/lib/inet/in\..*d		system_u:object_r:inetd_child_exec_t
+/usr/lib/gss/gssd		system_u:object_r:inetd_child_exec_t
+/usr/lib/sendmail		system_u:object_r:sendmail_exec_t
+/usr/lib/utmp_update		system_u:object_r:utempter_exec_t
+/usr/lib/gnome-pty-helper	system_u:object_r:gph_exec_t
+/usr/lib/fs/autofs/automount	system_u:object_r:bin_t
+/usr/lib/fs/autofs/dfshares	system_u:object_r:bin_t
+/usr/lib/fs/autofs/mount	system_u:object_r:bin_t
+/usr/lib/fs/autofs/share	system_u:object_r:bin_t
+/usr/lib/fs/autofs/unshare	system_u:object_r:bin_t
+/usr/lib/fs/cachefs(/.*)?	system_u:object_r:bin_t
+/usr/lib/fs/ctfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/dev/mount		system_u:object_r:bin_t
+/usr/lib/fs/fd/mount		system_u:object_r:bin_t
+/usr/lib/fs/hsfs/fstyp		system_u:object_r:bin_t
+/usr/lib/fs/hsfs/labelit	system_u:object_r:bin_t
+/usr/lib/fs/hsfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/lofs/mount		system_u:object_r:bin_t
+/usr/lib/fs/mntfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/nfs/dfmounts	system_u:object_r:bin_t
+/usr/lib/fs/nfs/dfshares	system_u:object_r:bin_t
+/usr/lib/fs/nfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/nfs/nfsfind		system_u:object_r:bin_t
+/usr/lib/fs/nfs/showmount	system_u:object_r:bin_t
+/usr/lib/fs/nfs/umount		system_u:object_r:bin_t
+/usr/lib/fs/objfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/pcfs/fsck		system_u:object_r:bin_t
+/usr/lib/fs/pcfs/fstyp		system_u:object_r:bin_t
+/usr/lib/fs/pcfs/mkfs		system_u:object_r:bin_t
+/usr/lib/fs/pcfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/proc/mount		system_u:object_r:bin_t
+/usr/lib/fs/sharefs/mount	system_u:object_r:bin_t
+/usr/lib/fs/smbfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/smbfs/umount	system_u:object_r:bin_t
+/usr/lib/fs/tmpfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/udfs/fsck		system_u:object_r:bin_t
+/usr/lib/fs/udfs/fsdb		system_u:object_r:bin_t
+/usr/lib/fs/udfs/fstyp		system_u:object_r:bin_t
+/usr/lib/fs/udfs/labelit	system_u:object_r:bin_t
+/usr/lib/fs/udfs/mkfs		system_u:object_r:bin_t
+/usr/lib/fs/udfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/ufs/clri		system_u:object_r:bin_t
+/usr/lib/fs/ufs/dcopy		system_u:object_r:bin_t
+/usr/lib/fs/ufs/df		system_u:object_r:bin_t
+/usr/lib/fs/ufs/edquota		system_u:object_r:bin_t
+/usr/lib/fs/ufs/ff		system_u:object_r:bin_t
+/usr/lib/fs/ufs/fsck		system_u:object_r:bin_t
+/usr/lib/fs/ufs/fsckall		system_u:object_r:bin_t
+/usr/lib/fs/ufs/fsdb		system_u:object_r:bin_t
+/usr/lib/fs/ufs/fsirand		system_u:object_r:bin_t
+/usr/lib/fs/ufs/fssnap		system_u:object_r:bin_t
+/usr/lib/fs/ufs/fstyp		system_u:object_r:bin_t
+/usr/lib/fs/ufs/labelit		system_u:object_r:bin_t
+/usr/lib/fs/ufs/lockfs		system_u:object_r:bin_t
+/usr/lib/fs/ufs/mboot		system_u:object_r:bin_t
+/usr/lib/fs/ufs/mkfs		system_u:object_r:bin_t
+/usr/lib/fs/ufs/mount		system_u:object_r:bin_t
+/usr/lib/fs/ufs/ncheck		system_u:object_r:bin_t
+/usr/lib/fs/ufs/newfs		system_u:object_r:bin_t
+/usr/lib/fs/ufs/quot		system_u:object_r:bin_t
+/usr/lib/fs/ufs/quota		system_u:object_r:bin_t
+/usr/lib/fs/ufs/quotacheck	system_u:object_r:bin_t
+/usr/lib/fs/ufs/quotaoff	system_u:object_r:bin_t
+/usr/lib/fs/ufs/quotaon		system_u:object_r:bin_t
+/usr/lib/fs/ufs/repquota	system_u:object_r:bin_t
+/usr/lib/fs/ufs/tunefs		system_u:object_r:bin_t
+/usr/lib/fs/ufs/ufsdump		system_u:object_r:bin_t
+/usr/lib/fs/ufs/ufsrestore	system_u:object_r:bin_t
+/usr/lib/fs/ufs/volcopy		system_u:object_r:bin_t
+/usr/lib/fs/zfs/fstyp		system_u:object_r:bin_t
+/usr/lib/fs/zfs/mount		system_u:object_r:bin_t
+/usr/lib/fs/zfs/umount		system_u:object_r:bin_t
+/usr/lib/lp/bin(/.*)?		system_u:object_r:bin_t
+/usr/lib/zones(/.*)?		system_u:object_r:bin_t
+/usr/lib/xend			system_u:object_r:bin_t
+/usr/lib/xenstored		system_u:object_r:bin_t
+/usr/lib/xenbaked		system_u:object_r:bin_t
+/usr/lib/xenconsoled		system_u:object_r:bin_t
+/usr/lib/xen/bin(/.*)?		system_u:object_r:bin_t
+/usr/lib/xen/boot(/.*)?		system_u:object_r:bin_t
+/usr/lib/xen/scripts(/.*)?	system_u:object_r:bin_t
+/usr/lib/vscan/vscand		system_u:object_r:bin_t
+/usr/lib/cacao/bin(/.*)?	system_u:object_r:bin_t
+/usr/lib/cpp			system_u:object_r:bin_t
+/usr/lib/ldap(/.*)?		system_u:object_r:bin_t
+/usr/lib/ipf(/.*)?		system_u:object_r:bin_t
+/usr/lib/rcap(/.*)?		system_u:object_r:bin_t
+/usr/lib/libvirtd		system_u:object_r:bin_t
+/usr/lib/platexec		system_u:object_r:bin_t
+/usr/lib/power/powerd		system_u:object_r:bin_t
+/usr/lib/mail.local		system_u:object_r:bin_t
+
+/usr/lib/firefox/firefox	system_u:object_r:bin_t
+/usr/lib/firefox/firefox-bin	system_u:object_r:bin_t
+/usr/lib/firefox/mozilla-xremote-client	system_u:object_r:bin_t
+/usr/lib/firefox/run-mozilla.sh	system_u:object_r:bin_t
+/usr/lib/firefox/xpidl		system_u:object_r:bin_t
+/usr/lib/firefox/xpt_dump	system_u:object_r:bin_t
+/usr/lib/firefox/xpt_link	system_u:object_r:bin_t
+
+/usr/lib/thunderbird/thunderbird	system_u:object_r:bin_t
+/usr/lib/thunderbird/thunderbird-bin	system_u:object_r:bin_t
+/usr/lib/thunderbird/mozilla-xremote-client	system_u:object_r:bin_t
+/usr/lib/thunderbird/mozilla-installer-bin	system_u:object_r:bin_t
+/usr/lib/thunderbird/run-mozilla.sh	system_u:object_r:bin_t
+/usr/lib/thunderbird/xpcshell		system_u:object_r:bin_t
+/usr/lib/thunderbird/xpidl		system_u:object_r:bin_t
+/usr/lib/thunderbird/xpt_dump	system_u:object_r:bin_t
+/usr/lib/thunderbird/xpt_link	system_u:object_r:bin_t
+
+#
+# /usr/sbin
+#
+/usr/sbin(/.*)?			system_u:object_r:bin_t
+/usr/sbin/fsck			system_u:object_r:fsadm_exec_t
+/usr/sbin/mkfs			system_u:object_r:fsadm_exec_t
+/usr/sbin/fdisk			system_u:object_r:fsadm_exec_t
+/usr/sbin/syslogd		system_u:object_r:syslogd_exec_t
+/usr/sbin/cron			system_u:object_r:crond_exec_t
+/usr/sbin/in\..*d		system_u:object_r:inetd_child_exec_t
+/usr/sbin/in.rlogind		system_u:object_r:rlogind_exec_t
+/usr/sbin/in.telnetd		system_u:object_r:rlogind_exec_t
+/usr/sbin/in.rshd		system_u:object_r:rshd_exec_t
+/usr/sbin/in.ftpd		system_u:object_r:ftpd_exec_t
+/usr/sbin/rpcbind		system_u:object_r:portmap_exec_t
+/usr/sbin/rpc\..*		system_u:object_r:rpcd_exec_t
+/usr/sbin/makemap		system_u:object_r:bin_t
+
+#
+# /usr/sadm
+#
+/usr/sadm/bin(/.*)?		system_u:object_r:bin_t
+/usr/sadm/admin/bin(/.*)?		system_u:object_r:bin_t
+/usr/sadm/lib(/.*)?		system_u:object_r:lib_t
+/usr/sadm/lib/wbem/rds		system_u:object_r:bin_t
+/usr/sadm/lib/wbem/cimonboot	system_u:object_r:bin_t
+/usr/sadm/lib/wbem/ddo		system_u:object_r:bin_t
+/usr/sadm/lib/wbem/remotedprovider	system_u:object_r:bin_t
+/usr/sadm/lib/wbem/smosscmd	system_u:object_r:bin_t
+/usr/sadm/lib/wbem/snmpXwbemd	system_u:object_r:bin_t
+
+#
+# /usr/sfw
+#
+/usr/sfw/bin(/.*)?		system_u:object_r:bin_t
+/usr/sfw/libexec(/.*)?		system_u:object_r:bin_t
+/usr/sfw/lib(/.*)?		system_u:object_r:lib_t
+
+#
+# /usr/dt
+#
+/usr/dt/bin(/.*)?		system_u:object_r:bin_t
+/usr/dt/config(/.*)?		system_u:object_r:bin_t
+/usr/dt/lib(/.*)?		system_u:object_r:lib_t
+
+/usr/openwin/bin(/.*)?		system_u:object_r:bin_t
+/usr/openwin/lib(/.*)?		system_u:object_r:lib_t
+/usr/openwin/sfw(/.*)?		system_u:object_r:lib_t
+/usr/openwin/server(/.*)?	system_u:object_r:lib_t
+
+#
+# /usr/X11
+#
+/usr/X11/bin(/.*)?		system_u:object_r:bin_t
+/usr/X11/bin/Xserver		system_u:object_r:xserver_exec_t
+/usr/X11/bin/(amd|i386|sparcv).*/Xorg	system_u:object_r:xserver_exec_t
+/usr/X11/lib(/.*)?		system_u:object_r:lib_t
+/usr/X11/share/man(/.*)?	system_u:object_r:man_t
+
+#
+# /usr/perl5
+#
+/usr/perl5(/.*)?		system_u:object_r:bin_t
+/usr/perl5/man(/.*)?		system_u:object_r:man_t
+
+#
+# /usr/[java,jdk]
+#
+/usr/java(/.*)?			system_u:object_r:bin_t
+/usr/jdk(/.*)?			system_u:object_r:bin_t
+
+#
+# /usr/bsd
+#
+/usr/ucb(/.*)?			system_u:object_r:bin_t
+
+#
+# /usr/xpg[4-5]
+#
+/usr/xpg4/bin(/.*)?		system_u:object_r:bin_t
+/usr/xpg5/bin(/.*)?		system_u:object_r:bin_t
+
+#
+# StarOffice
+#
+/opt/staroffice8/program/lib.*\.so.*	system_u:object_r:lib_t
+/opt/staroffice8/program/.*\.so		system_u:object_r:lib_t
+/opt/staroffice8/program/pagin		system_u:object_r:bin_t
+/opt/staroffice8/program/soffice	system_u:object_r:bin_t
+/opt/staroffice8/program/soffice.bin	system_u:object_r:bin_t
+/opt/staroffice8/program/spadmin	system_u:object_r:bin_t
+/opt/staroffice8/program/spadmin.bin	system_u:object_r:bin_t
+/opt/staroffice8/program/stclient_wrapper	system_u:object_r:bin_t
+/opt/staroffice8/program/pkgchk.bin	system_u:object_r:bin_t
+/opt/staroffice8/program/pluginapp.bin	system_u:object_r:bin_t
+
+#
+# SUNWspro
+#
+/opt/SUNWspro/prod/bin(/.*)?	system_u:object_r:bin_t
+/opt/SUNWspro/prod/lib(/.*)?	system_u:object_r:lib_t
+
+#
+# SUNWonbld
+#
+/opt/onbld/bin(/.*)?		system_u:object_r:bin_t
+/opt/onbld/lib(/.*)?		system_u:object_r:lib_t
+
+#
+# /usr/gnu
+#
+/usr/gnu/bin(/.*)?		system_u:object_r:bin_t
+
+#
+# /usr/benchmarks
+#
+/usr/benchmarks(/.*)?		system_u:object_r:bin_t
+
+#
+# /var
+#
+/var(/.*)?			system_u:object_r:var_t
+/var/yp(/.*)?			system_u:object_r:var_yp_t
+/var/lib(/.*)?			system_u:object_r:var_lib_t
+/var/tmp(/.*)?			system_u:object_r:tmp_t
+/var/dt/tmp(/.*)?			system_u:object_r:tmp_t
+/var/dt/appconfig/appmanager(/.*)?	system_u:object_r:tmp_t
+/var/cron(/.*)?			system_u:object_r:cron_log_t
+
+#
+# /var/run & /etc/svc/volatile
+#
+/var/run(/.*)?			system_u:object_r:var_run_t
+/var/run/.*\.*pid		<<none>>
+/etc/svc/volatile		system_u:object_r:var_run_t
+
+#
+# /var/spool
+#
+/var/spool(/.*)?		system_u:object_r:var_spool_t
+/var/spool/cron(/.*)?		system_u:object_r:cron_spool_t
+/var/spool/lp(/.*)?		system_u:object_r:lpd_spool_t
+/var/mail(/.*)?			system_u:object_r:mail_spool_t
+/var/spool/mqueue(/.*)?		system_u:object_r:mqueue_spool_t
+/var/spool/clientmqueue(/.*)?	system_u:object_r:mqueue_spool_t
+
+# 
+# /var/log
+#
+/var/log(/.*)?			system_u:object_r:var_log_t
+/var/adm(/.*)?			system_u:object_r:var_log_t
+/var/adm/wtmpx			system_u:object_r:wtmp_t
+
+# Wrapper for architecture-specific executables.
+/usr/lib/isaexec		system_u:object_r:bin_t
+
+#
+# Solaris platform specific files
+#
+/platform(/.*)?*\.so\.[1-9]?            system_u:object_r:lib_t
+/usr/platform(/.*)?*\.so.*              system_u:object_r:lib_t
+/usr/platform(/.*)?\/sbin\/.*           system_u:object_r:bin_t

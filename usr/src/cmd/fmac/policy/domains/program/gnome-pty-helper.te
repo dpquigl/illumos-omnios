@@ -1,0 +1,87 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#
+# The gph_exec_t type is the type of the gnome-pty-helper
+# binary.
+#
+type gph_exec_t, file_type, sysadmfile, exec_type;
+
+
+#################################
+# gph_domain(user_domain)
+#
+# Define a gph ("gnome-pty-helper") domain for a user domain.
+#
+# The *_gph_t domains are for the gnome_pty_helper program.
+# This program is executed by gnome-terminal to handle
+# updates to utmp and wtmp.  In this regard, it is similar
+# to utempter.  However, unlike utempter, gnome-pty-helper
+# also creates the pty file for the terminal program.
+# There is one *_gph_t domain for each user domain.  
+#
+define(`gph_domain',`
+
+# This is the gph domain for the user domain specified by $1.
+type $1_gph_t, domain;
+
+# Allow gnome-pty-helper to be setgid.
+allow $1_gph_t $1_gph_t:capability { setgid };
+
+# Allow gnome-pty-helper to create ptys.
+can_create_other_pty($1_gph, $1)
+
+# Allow gnome-pty-helper to update /var/run/utmp and /var/log/wtmp.
+allow $1_gph_t initrc_var_run_t:file rw_file_perms;
+allow $1_gph_t var_log_t:file rw_file_perms;
+allow $1_gph_t wtmp_t:file rw_file_perms;
+
+# Allow gph to rw to stream sockets of appropriate user type.
+# (Need this so gnome-pty-helper can pass pty fd to parent 
+#  gnome-terminal which is running in a user domain.)
+allow $1_gph_t $1_t:unix_stream_socket rw_stream_socket_perms;
+
+# Allow gph to inherit tty fd from login
+allow $1_gph_t local_login_t:fd inherit_fd_perms;
+
+# Allow $1 user domain to receive pty fd from gnome-pty-helper.
+allow $1_t $1_gph_t:fd receive_fd_perms;
+
+# Cause the $1 user domain to run gnome-pty-helper in the 
+# appropriate gph_*_t domain. The gph_exec_t type is the one
+# and only type for the gnome-pty-helper binary.  We defined
+# it previously, outside of this macro.
+domain_auto_trans($1_t, gph_exec_t, $1_gph_t)
+
+# Allow NIS authentication
+can_network($1_gph_t)
+')
+

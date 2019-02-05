@@ -1,0 +1,44 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the kernel_t domain.
+#
+
+#
+# kernel_t is the domain of process 0 and the kernel
+# threads started by it. It is also the target type
+# when checking permissions in the system class.
+# 
+type kernel_t, domain, privuser, privrole, privowner, privmem, admin;
+
+# Run init in the init_t domain.
+domain_auto_trans(kernel_t, init_exec_t, init_t)
+
+# Make kernel_t unconfined.
+unconfined_domain(kernel_t)
+

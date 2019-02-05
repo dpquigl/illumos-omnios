@@ -1,0 +1,199 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# The admin_domain macro and the 
+# sysadm_t domain.
+#
+
+#################################
+# 
+# admin_domain(domain)
+#
+# Rules for all user admin domains.
+#
+define(`admin_domain',`
+
+# Inherit rules for ordinary users.
+user_domain($1)
+
+# Use capabilities other than sys_module.
+allow $1_t self:capability ~sys_module;
+
+# Use system operations.
+allow $1_t kernel_t:system *;
+
+# Change system parameters.
+can_sysctl($1_t)
+
+# Mount and unmount file systems.
+allow $1_t fs_type:filesystem mount_fs_perms;
+allow $1_t file_t:dir mounton;
+
+# Create and use all files that have the sysadmfile attribute.
+allow $1_t sysadmfile:notdevfile_class_set create_file_perms;
+allow $1_t sysadmfile:dir create_dir_perms;
+
+# Use /sbin/lilo to update the boot loader.
+# XXX FIXME!  Move lilo into separate domain.
+allow $1_t fixed_disk_device_t:devfile_class_set rw_file_perms;
+
+# Access removable devices.
+allow $1_t removable_device_t:devfile_class_set rw_file_perms;
+
+# Run fs admin programs in the fsadm_t domain.
+domain_auto_trans($1_t, fsadm_exec_t, fsadm_t)
+allow fsadm_t $1_tty_device_t:chr_file rw_file_perms;
+allow fsadm_t $1_devpts_t:chr_file rw_file_perms;
+allow fsadm_t $1_gph_t:fd inherit_fd_perms;
+
+# Run ifconfig program in the ifconfig_t domain.
+domain_auto_trans($1_t, ifconfig_exec_t, ifconfig_t)
+allow ifconfig_t $1_tty_device_t:chr_file rw_file_perms;
+allow ifconfig_t $1_devpts_t:chr_file rw_file_perms;
+allow ifconfig_t $1_gph_t:fd inherit_fd_perms;
+
+# Run logrotate program in the logrotate_t domain.
+domain_auto_trans($1_t, logrotate_exec_t, logrotate_t)
+allow logrotate_t $1_tty_device_t:chr_file rw_file_perms;
+allow logrotate_t $1_devpts_t:chr_file rw_file_perms;
+allow logrotate_t $1_gph_t:fd inherit_fd_perms;
+
+# Run init (telinit).
+can_exec($1_t, init_exec_t)
+
+# Communicate with the init process.
+allow $1_t initctl_t:fifo_file rw_file_perms;
+
+# Examine all processes.
+allow $1_t domain:dir r_dir_perms;
+allow $1_t domain:notdevfile_class_set r_file_perms;
+
+# Send signals to all processes.
+allow $1_t domain:process signal_perms;
+
+# Run modules programs in their own domains.
+domain_auto_trans($1_t, depmod_exec_t, depmod_t)
+allow depmod_t $1_tty_device_t:chr_file rw_file_perms;
+allow depmod_t $1_devpts_t:chr_file rw_file_perms;
+allow depmod_t $1_gph_t:fd inherit_fd_perms;
+
+domain_auto_trans($1_t, modprobe_exec_t, modprobe_t)
+allow modprobe_t $1_tty_device_t:chr_file rw_file_perms;
+allow modprobe_t $1_devpts_t:chr_file rw_file_perms;
+allow modprobe_t $1_gph_t:fd inherit_fd_perms;
+
+domain_auto_trans($1_t, insmod_exec_t, insmod_t)
+allow insmod_t $1_tty_device_t:chr_file rw_file_perms;
+allow insmod_t $1_devpts_t:chr_file rw_file_perms;
+allow insmod_t $1_gph_t:fd inherit_fd_perms;
+
+domain_auto_trans($1_t, rmmod_exec_t, rmmod_t)
+allow rmmod_t $1_tty_device_t:chr_file rw_file_perms;
+allow rmmod_t $1_devpts_t:chr_file rw_file_perms;
+allow rmmod_t $1_gph_t:fd inherit_fd_perms;
+
+# Reload the policy configuration.
+allow $1_t security_t:security load_policy;
+
+# Execute setfiles.
+can_exec($1_t, policy_src_t)
+
+# Relabel all files.
+allow $1_t file_type:dir_file_class_set { getattr relabelfrom relabelto };
+
+# Relabel the default file type to any file type. 
+allow file_t   file_type:dir_file_class_set transition;
+
+# Change the owner of any file to system_u. 
+allow file_type self:dir_file_class_set transition;
+
+# Label the policy configuration file during install.
+allow root_t policy_config_t:file transition;
+
+# Label bin programs during install.
+allow bin_t { passwd_exec_t login_exec_t }:file transition;
+
+# Label sbin programs during install.
+allow sbin_t { sulogin_exec_t rshd_exec_t crond_exec_t logrotate_exec_t }:file transition;
+
+# Label shared libraries during install.
+allow lib_t shlib_t:file transition;
+
+# Create files in /tmp/orbit-* and /tmp/.ICE-unix
+# with our derived tmp type rather than user_tmp_t.
+file_type_auto_trans($1_t, user_tmp_t, $1_tmp_t)
+
+# Create files in /tmp/.X11-unix with our X servers derived
+# tmp type rather than user_xserver_tmp_t.
+file_type_auto_trans($1_xserver_t, user_xserver_tmp_t, $1_xserver_tmp_t)
+
+# Allow our mail domain to write to dead.letter.
+allow $1_mail_t user_home_t:dir rw_dir_perms;
+allow $1_mail_t user_home_t:file create_file_perms;
+
+# Allow our su domain to write to .Xauthority.
+allow $1_su_t user_home_t:dir rw_dir_perms;
+allow $1_su_t user_home_t:file create_file_perms;
+
+# Allow searching of /tmp/.X11-unix.
+allow $1_mozilla_t user_xserver_tmp_t:dir r_dir_perms;
+
+# Allow our mozilla domain to write to .mozilla.
+allow $1_mozilla_t user_mozilla_rw_t:dir create_dir_perms;
+allow $1_mozilla_t user_mozilla_rw_t:{ file lnk_file } create_file_perms;
+
+# Allow our domain to relabel downloaded files to its home type.
+allow $1_t user_mozilla_rw_t:{ dir file lnk_file } relabelfrom;
+allow user_mozilla_rw_t $1_home_t:{ dir file lnk_file } transition;
+
+# Allow our crontab domain to unlink a user cron spool file.
+allow $1_crontab_t user_cron_spool_t:file unlink;
+
+')
+
+
+#################################
+# 
+# Rules for the sysadm_t domain.
+#
+# sysadm_t is the system administrator domain.
+#
+type sysadm_t, domain, privlog, privowner, privmem, admin, userdomain;
+
+admin_domain(sysadm)
+
+# Inherit and use descriptors from remote_login_t.
+allow sysadm_t remote_login_t:fd inherit_fd_perms;
+
+# Make sysadm unconfined for now.
+unconfined_domain(sysadm_t)

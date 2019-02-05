@@ -1,0 +1,92 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the inetd_t domain and
+# the inetd_child_t domain.
+#
+
+#################################
+#
+# Rules for the inetd_t domain.
+#
+type inetd_t, domain, privlog;
+type inetd_exec_t, file_type, sysadmfile, exec_type;
+
+type inetd_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(inetd_t, tmp_t, inetd_tmp_t)
+type inetd_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(inetd_t, var_run_t, inetd_var_run_t)
+
+# Inherit and use descriptors from init.
+allow inetd_t init_t:fd inherit_fd_perms;
+
+# Use privileges.
+allow inetd_t self:privilege_class_set { contract_event sys_resource };
+
+# Runs ksh during startup.
+# Possibly this should transition into a different domain.
+can_exec(inetd_t, shell_exec_t)
+
+# Use the network.
+can_network(inetd_t)
+
+# Run tcpd in the tcpd_t domain.
+domain_auto_trans(inetd_t, tcpd_exec_t, tcpd_t)
+
+# Run other daemons in the inetd_child_t domain.
+domain_auto_trans(inetd_t, inetd_child_exec_t, inetd_child_t)
+
+# Bind to the telnet, ftp, rlogin and rsh ports.
+allow inetd_t telnet_port_t:tcp_socket name_bind;
+allow inetd_t ftp_port_t:tcp_socket name_bind;
+allow inetd_t rlogin_port_t:tcp_socket name_bind;
+allow inetd_t rsh_port_t:tcp_socket name_bind;
+
+
+#################################
+#
+# Rules for the inetd_child_t domain.
+#
+# inetd_child_t is a general domain for daemons started
+# by inetd that do not have their own individual domains yet.
+# inetd_child_exec_t is the type of the corresponding
+# programs.
+#
+type inetd_child_t, domain, privlog;
+type inetd_child_exec_t, file_type, sysadmfile, exec_type;
+
+type inetd_child_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(inetd_child_t, tmp_t, inetd_child_tmp_t)
+type inetd_child_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(inetd_child_t, var_run_t, inetd_child_var_run_t)
+
+# Use sockets inherited from inetd.
+allow inetd_child_t inetd_t:tcp_socket rw_stream_socket_perms;
+
+# Use the network
+can_network(inetd_child_t)

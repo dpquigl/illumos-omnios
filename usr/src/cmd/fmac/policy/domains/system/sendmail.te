@@ -1,0 +1,78 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the sendmail_t domain.
+#
+# sendmail_t is the domain for the sendmail 
+# daemon started by the init rc scripts.
+# sendmail_exec_t is the type of the sendmail executable.
+#
+type sendmail_t, domain, privlog;
+type sendmail_exec_t, file_type, sysadmfile, exec_type;
+
+type sendmail_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(sendmail_t, tmp_t, sendmail_tmp_t)
+type sendmail_var_log_t, file_type, sysadmfile;
+file_type_auto_trans(sendmail_t, var_log_t, sendmail_var_log_t)
+type sendmail_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(sendmail_t, var_run_t, sendmail_var_run_t)
+
+# Use privileges.
+allow sendmail_t self:privilege_class_set { proc_setid net_privaddr };
+
+# Inherit and use descriptors from init.
+allow sendmail_t init_t:fd inherit_fd_perms;
+
+# Use the network.
+can_network(sendmail_t)
+
+# Bind to the SMTP port.
+allow sendmail_t smtp_port_t:tcp_socket name_bind;
+
+# Write to /etc/aliases and /etc/mail.
+allow sendmail_t etc_aliases_t:file rw_file_perms;
+allow sendmail_t etc_mail_t:dir rw_dir_perms;
+allow sendmail_t etc_mail_t:file create_file_perms;
+
+# Write to /var/spool/mail and /var/spool/mqueue.
+allow sendmail_t mail_spool_t:dir rw_dir_perms;
+allow sendmail_t mail_spool_t:file create_file_perms;
+allow sendmail_t mqueue_spool_t:dir rw_dir_perms;
+allow sendmail_t mqueue_spool_t:file create_file_perms;
+
+# Use a pipe inherited from init.
+allow sendmail_t initrc_t:pipe rw_file_perms;
+
+# Execute procmail.
+can_exec(sendmail_t, bin_t)
+
+# /usr/sbin/sendmail asks for w access to utmp, but it will operate
+# correctly without it.  Do not audit write denials to utmp.
+auditdeny sendmail_t initrc_var_run_t:file ~write;
+
+

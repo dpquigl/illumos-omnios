@@ -1,0 +1,82 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# mail_domain(user_domain)
+#
+# Define a sendmail domain for a user domain.
+#
+define(`mail_domain',`
+
+type $1_mail_t, domain, privlog;
+type $1_mail_tmp_t, file_type, sysadmfile, tmpfile;
+
+# Enter by the sendmail program.
+domain_auto_trans($1_t, sendmail_exec_t, $1_mail_t)
+
+# Use capabilities
+allow $1_mail_t $1_mail_t:capability { setuid setgid net_bind_service chown };
+
+# Use the network.
+can_network($1_mail_t)
+
+# Write to /var/spool/mail and /var/spool/mqueue.
+allow $1_mail_t mail_spool_t:dir rw_dir_perms;
+allow $1_mail_t mail_spool_t:file create_file_perms;
+allow $1_mail_t mqueue_spool_t:dir rw_dir_perms;
+allow $1_mail_t mqueue_spool_t:file create_file_perms;
+
+# Write to /var/log/sendmail.st
+file_type_auto_trans($1_mail_t, var_log_t, sendmail_var_log_t)
+
+# Inherit and use descriptors from login.
+allow $1_mail_t local_login_t:fd inherit_fd_perms;
+allow $1_mail_t remote_login_t:fd inherit_fd_perms;
+
+# Execute procmail.
+can_exec($1_mail_t, bin_t)
+
+# Write to the user domain tty.
+allow $1_mail_t $1_tty_device_t:chr_file rw_file_perms;
+allow $1_mail_t $1_devpts_t:chr_file rw_file_perms;
+
+# Inherit and use descriptors from gnome-pty-helper.
+allow $1_mail_t $1_gph_t:fd inherit_fd_perms;
+
+# Read from a user domain pipe.
+allow $1_mail_t $1_t:pipe r_file_perms;
+
+# Read user temporary files.
+allow $1_mail_t $1_tmp_t:file r_file_perms;
+
+# Create dead.letter in user home directories.
+allow $1_mail_t $1_home_t:dir rw_dir_perms;
+allow $1_mail_t $1_home_t:file create_file_perms;
+
+')
+
+

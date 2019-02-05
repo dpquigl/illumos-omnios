@@ -1,0 +1,59 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the gpm_t domain.
+#
+# gpm_t is the domain of the console mouse server.
+# gpm_exec_t is the type of the console mouse server program.
+# gpmctl_t is the type of the Unix domain socket created
+# by the console mouse server.
+#
+type gpm_t, domain, privlog;
+type gpm_exec_t, file_type, sysadmfile, exec_type;
+type gpmctl_t, file_type, sysadmfile;
+
+type gpm_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(gpm_t, tmp_t, gpm_tmp_t)
+type gpm_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(gpm_t, var_run_t, gpm_var_run_t)
+
+# Use capabilities.
+allow gpm_t gpm_t:capability { setuid dac_override };
+
+# Inherit and use descriptors from init.
+allow gpm_t init_t:fd inherit_fd_perms;
+
+# Create and bind to /dev/gpmctl.
+file_type_auto_trans(gpm_t, device_t, gpmctl_t)
+allow gpm_t gpmctl_t:unix_stream_socket name_bind;
+
+# Access /dev/psaux.
+allow gpm_t psaux_t:chr_file rw_file_perms;
+
+# Read and write ttys.
+allow gpm_t tty_device_t:chr_file rw_file_perms;

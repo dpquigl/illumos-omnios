@@ -1,0 +1,84 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+type crontab_exec_t, file_type, sysadmfile, exec_type;
+
+
+#################################
+#
+# The crontab_domain macro.
+#
+
+define(`crontab_domain',`
+
+###########################################
+# crontab
+#
+# define crontab domain for a user domain
+#
+
+# Domain of crontab process
+type $1_crontab_t, domain, privlog;
+
+type $1_crontab_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans($1_crontab_t, tmp_t, $1_crontab_tmp_t)
+
+# Type of user crontabs once moved to cron spool
+type $1_cron_spool_t, file_type, sysadmfile;
+
+# Allow crond to read those crontabs in cron spool.
+allow crond_t $1_cron_spool_t:file r_file_perms;
+
+# Enter by the crontab executable
+domain_auto_trans($1_t, crontab_exec_t, $1_crontab_t)
+
+# Run helper programs.
+can_exec_any($1_crontab_t)
+
+# Use capabilities
+allow $1_crontab_t $1_crontab_t:capability { setuid chown dac_override net_bind_service };
+
+# Use the network for NIS.
+can_network($1_crontab_t)
+
+# Read user crontabs 
+allow $1_crontab_t $1_home_t:dir r_dir_perms;  
+
+# Create crontabs in /var/spool/cron as $1_cron_spool_t
+file_type_auto_trans($1_crontab_t, cron_spool_t, $1_cron_spool_t)
+
+# Use the cron log file
+allow $1_crontab_t cron_log_t:file r_file_perms;
+allow $1_crontab_t cron_log_t:file { append };
+
+# Write to user domain tty.
+allow $1_crontab_t $1_tty_device_t:chr_file rw_file_perms;
+allow $1_crontab_t $1_devpts_t:chr_file rw_file_perms;
+
+# Inherit and use descriptors from gnome-pty-helper.
+allow $1_crontab_t $1_gph_t:fd inherit_fd_perms;
+
+')

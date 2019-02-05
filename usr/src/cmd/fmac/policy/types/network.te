@@ -1,0 +1,117 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+############################################
+#
+# Network types
+#
+
+# 
+# any_socket_t is the default destination
+# socket type for UDP traffic.  Unless a 
+# destination socket type is explicitly specified
+# using sendto_secure/sendmsg_secure, this type
+# is used for the udp_socket sendto permission check.
+#
+type any_socket_t, socket_type;
+
+#
+# icmp_socket_t is the type of the kernel socket
+# used to send ICMP messages.
+# tcp_socket_t is the type of the kernel socket
+# used to send TCP resets.
+#
+type icmp_socket_t, socket_type;
+type tcp_socket_t, socket_type;
+
+#
+# port_t is the default type of INET port numbers.
+# The *_port_t types are used for specific port
+# numbers in net_contexts or net_contexts.mls.
+#
+type port_t, port_type;
+type ftp_port_t, port_type;
+type telnet_port_t, port_type;
+type smtp_port_t, port_type;
+type http_port_t, port_type;
+type rlogin_port_t, port_type;
+type rsh_port_t, port_type;
+type printer_port_t, port_type;
+
+#
+# netif_t is the default type of network interfaces.
+# The netif_*_t types are used for specific network
+# interfaces in net_contexts or net_contexts.mls.
+#
+type netif_t, netif_type;
+type netif_eth0_t, netif_type;
+type netif_eth1_t, netif_type;
+type netif_lo_t, netif_type;
+
+#
+# netmsg_t is the default type of unlabeled received messages.
+# The netmsg_*_t types are used for specific network
+# interfaces in net_contexts or net_contexts.mls.
+#
+type netmsg_t, netmsg_type;
+type netmsg_eth0_t, netmsg_type;
+type netmsg_eth1_t, netmsg_type;
+type netmsg_lo_t, netmsg_type;
+
+#
+# node_t is the default type of network nodes.
+# The node_*_t types are used for specific network
+# nodes in net_contexts or net_contexts.mls.
+#
+type node_t, node_type;
+type node_lo_t, node_type;
+type node_internal_t, node_type;
+
+
+#
+# Allow the ICMP socket to send and receive.
+#
+allow icmp_socket_t netif_type:netif { rawip_recv rawip_send };
+allow icmp_socket_t node_type:node { rawip_recv rawip_send };
+
+#
+# Allow the TCP reset socket to send and receive.
+#
+allow tcp_socket_t netif_type:netif { tcp_send tcp_recv };
+allow tcp_socket_t node_type:node { tcp_send tcp_recv };
+
+#
+# Allow unlabeled network messages to be received.
+#
+allow netmsg_t netif_t:netif { tcp_recv udp_recv rawip_recv };
+allow netmsg_t node_t:node { tcp_recv udp_recv rawip_recv };
+allow netmsg_eth0_t netif_eth0_t:netif { tcp_recv udp_recv rawip_recv };
+allow netmsg_eth0_t node_internal_t:node { tcp_recv udp_recv rawip_recv };
+allow netmsg_eth0_t node_t:node { tcp_recv udp_recv rawip_recv };
+allow netmsg_eth1_t netif_eth1_t:netif { tcp_recv udp_recv rawip_recv };
+allow netmsg_eth1_t node_t:node { tcp_recv udp_recv rawip_recv };
+allow netmsg_lo_t netif_lo_t:netif { tcp_recv udp_recv rawip_recv };
+allow netmsg_lo_t node_lo_t:node { tcp_recv udp_recv rawip_recv };

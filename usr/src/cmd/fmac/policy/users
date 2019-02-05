@@ -1,0 +1,65 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+##################################
+#
+# User configuration.
+#
+# This file defines each user recognized by the system security policy
+# if MLS is not enabled.
+# Only the user identities defined in this file may be used as the
+# user attribute in a security context.
+#
+# Each user has a set of roles that may be entered by processes
+# with the user's identity.  The syntax of a user declaration is:
+#
+# 	user username roles role_set ;
+#
+
+#
+# system_u is the user identity for system processes and objects.
+# There should be no corresponding Unix user identity for system_u,
+# and a user process should never be assigned the system_u user
+# identity.
+#
+user system_u roles system_r;
+
+# 
+# user_u is the fallback FMAC user identity for users who
+# have no specific FMAC user identity in the policy.  It
+# is limited to the unprivileged user_r role.
+user user_u roles { user_r };
+
+#
+# sysadm_u is the user identity for system administration.
+#
+
+user sysadm_u roles { user_r sysadm_r };

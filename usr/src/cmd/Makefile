@@ -165,6 +165,7 @@ COMMON_SUBDIRS=		\
 	flowadm		\
 	flowstat	\
 	fm		\
+	fmac	\
 	fmt		\
 	fmthard		\
 	fmtmsg		\

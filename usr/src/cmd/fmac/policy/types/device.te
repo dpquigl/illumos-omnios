@@ -1,0 +1,102 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+############################################
+#
+# Device types
+#
+
+#
+# device_t is the type of /dev.
+#
+type device_t, file_type;
+
+#
+# null_device_t is the type of /dev/null.
+#
+type null_device_t, file_type;
+
+#
+# zero_device_t is the type of /dev/zero.
+#
+type zero_device_t, file_type;
+
+#
+# console_device_t is the type of /dev/console.
+#
+type console_device_t, file_type;
+
+#
+# memory_device_t is the type of /dev/kmem,
+# /dev/mem, and /dev/port.
+#
+type memory_device_t, file_type;
+
+#
+# random_device_t is the type of /dev/urandom
+# and /dev/random.
+#
+type random_device_t, file_type;
+
+#
+# devtty_t is the type of /dev/tty.
+#
+type devtty_t, file_type;
+
+#
+# tty_device_t is the type of /dev/*tty*
+#
+type tty_device_t, file_type;
+
+#
+# fixed_disk_device_t is the type of 
+# /dev/hd* and /dev/sd*.
+#
+type fixed_disk_device_t, file_type;
+
+#
+# removable_device_t is the type of
+# /dev/scd* and /dev/fd*.
+#
+type removable_device_t, file_type;
+
+#
+# clock_device_t is the type of
+# /dev/rtc.
+#
+type clock_device_t, file_type;
+
+#
+# misc_device_t is the type of miscellaneous devices.
+# XXX:  FIXME!  Appropriate access to these devices need to be identified.
+#
+type misc_device_t, file_type;
+
+#
+# psaux_t is the type of the /dev/psaux mouse device.
+#
+type psaux_t, file_type;
+

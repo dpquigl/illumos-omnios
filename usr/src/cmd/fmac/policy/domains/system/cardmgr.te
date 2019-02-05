@@ -1,0 +1,74 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the cardmgr_t domain.
+#
+type cardmgr_t, domain, privlog;
+type cardmgr_exec_t, file_type, sysadmfile, exec_type;
+
+# Use capabilities (net_admin for route).
+allow cardmgr_t self:capability { sys_admin net_admin };
+
+# Use system operations (for route).
+allow cardmgr_t kernel_t:system { route_control };
+
+# Inherit and use descriptors from init.
+allow cardmgr_t init_t:fd inherit_fd_perms;
+
+# Use a pipe created by initrc_t.
+allow cardmgr_t initrc_t:pipe rw_file_perms;
+
+# Create pid file and stab file.
+type cardmgr_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(cardmgr_t, var_run_t, cardmgr_var_run_t)
+
+# Create device files in /tmp.
+type cardmgr_dev_t, file_type, sysadmfile, tmpfile;
+type_transition cardmgr_t tmp_t:chr_file cardmgr_dev_t;
+allow cardmgr_t cardmgr_dev_t:chr_file create_file_perms;
+
+# Create symbolic links in /dev.
+type cardmgr_lnk_t, file_type, sysadmfile;
+type_transition cardmgr_t device_t:lnk_file cardmgr_lnk_t;
+allow cardmgr_t device_t:dir { add_name remove_name search };
+allow cardmgr_t cardmgr_lnk_t:lnk_file create_file_perms;
+
+# Run a shell, normal commands, /etc/pcmcia scripts. 
+can_exec_any(cardmgr_t)
+
+# Run insmod and rmmod. 
+domain_auto_trans(cardmgr_t, insmod_exec_t, insmod_t)
+domain_auto_trans(cardmgr_t, rmmod_exec_t, rmmod_t)
+
+# Run ifconfig.
+domain_auto_trans(cardmgr_t, ifconfig_exec_t, ifconfig_t)
+allow ifconfig_t cardmgr_t:pipe rw_file_perms;
+
+# Read /proc/PID directories for all domains (for fuser).
+allow cardmgr_t domain:notdevfile_class_set r_file_perms;
+allow cardmgr_t domain:dir r_dir_perms;

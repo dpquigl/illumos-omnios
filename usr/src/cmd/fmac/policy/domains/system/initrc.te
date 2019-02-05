@@ -1,0 +1,167 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the initrc_t domain.
+#
+# initrc_t is the domain of the init rc scripts.
+# initrc_exec_t is the type of the init program.
+#
+type initrc_t, domain, privlog, privuser, privrole, privowner, privmem, admin;
+type initrc_exec_t, file_type, sysadmfile, exec_type;
+
+type initrc_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(initrc_t, tmp_t, initrc_tmp_t)
+type initrc_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(initrc_t, var_run_t, initrc_var_run_t)
+
+# Use capabilities.
+allow initrc_t initrc_t:capability ~sys_module;
+
+# Use system operations.
+allow initrc_t kernel_t:system *;
+
+# Set values in /proc/sys.
+can_sysctl(initrc_t)
+
+# Use the network.
+can_network(initrc_t)
+
+# Run helper programs in the initrc_t domain.
+can_exec_any(initrc_t)
+
+# Run daemons in their own domains.
+domain_auto_trans(initrc_t, syslogd_exec_t, syslogd_t)
+domain_auto_trans(initrc_t, klogd_exec_t, klogd_t)
+domain_auto_trans(initrc_t, crond_exec_t, crond_t)
+domain_auto_trans(initrc_t, atd_exec_t, atd_t)
+domain_auto_trans(initrc_t, lpd_exec_t, lpd_t)
+domain_auto_trans(initrc_t, inetd_exec_t, inetd_t)
+domain_auto_trans(initrc_t, sendmail_exec_t, sendmail_t)
+domain_auto_trans(initrc_t, ypbind_exec_t, ypbind_t)
+domain_auto_trans(initrc_t, portmap_exec_t, portmap_t)
+domain_auto_trans(initrc_t, rpcd_exec_t, rpcd_t)
+domain_auto_trans(initrc_t, gpm_exec_t, gpm_t)
+domain_auto_trans(initrc_t, xfs_exec_t, xfs_t)
+domain_auto_trans(initrc_t, apmd_exec_t, apmd_t)
+domain_auto_trans(initrc_t, cardmgr_exec_t, cardmgr_t)
+domain_auto_trans(initrc_t, sshd_exec_t, sshd_t)
+
+# Run modules programs in their own domains.
+domain_auto_trans(initrc_t, depmod_exec_t, depmod_t)
+domain_auto_trans(initrc_t, modprobe_exec_t, modprobe_t)
+domain_auto_trans(initrc_t, insmod_exec_t, insmod_t)
+domain_auto_trans(initrc_t, rmmod_exec_t, rmmod_t)
+
+# Read conf.modules.
+allow initrc_t modules_conf_t:file r_file_perms;
+
+# Run fsck and swapon in their own domain.
+domain_auto_trans(initrc_t, fsadm_exec_t, fsadm_t)
+
+# Run ifconfig in its own domain.
+domain_auto_trans(initrc_t, ifconfig_exec_t, ifconfig_t)
+
+# Run other rc scripts in the initrc_t domain.
+allow initrc_t initrc_exec_t:file rx_file_perms;
+
+# Run init (telinit) in the initrc_t domain.
+can_exec(initrc_t, init_exec_t)
+
+# Communicate with the init process.
+allow initrc_t initctl_t:fifo_file rw_file_perms;
+
+# Send messages to portmap and ypbind.
+can_udp_send(initrc_t, portmap_t)
+can_udp_send(initrc_t, ypbind_t)
+
+# Search persistent label mappings.
+allow initrc_t file_labels_t:dir r_dir_perms;
+allow initrc_t file_labels_t:file stat_file_perms;
+
+# Read /proc/PID directories for all domains.
+allow initrc_t domain:notdevfile_class_set r_file_perms;
+allow initrc_t domain:dir r_dir_perms;
+
+# Mount and unmount file systems.
+allow initrc_t fs_type:filesystem mount_fs_perms;
+allow initrc_t file_t:dir mounton;
+
+# Create runtime files in /etc, e.g. /etc/mtab, /etc/HOSTNAME.
+file_type_auto_trans(initrc_t, etc_t, etc_runtime_t)
+
+# Update /etc/mail.
+allow initrc_t etc_mail_t:file rw_file_perms;
+
+# Generate /boot/kernel.h.
+file_type_auto_trans(initrc_t, boot_t, boot_runtime_t)
+
+# Unlink the xfs socket.
+allow initrc_t xfs_tmp_t:dir { read search getattr remove_name rmdir };
+allow initrc_t xfs_tmp_t:sock_file { read getattr unlink };
+
+# Update /var/log/wtmp and /var/log/dmesg.
+allow initrc_t wtmp_t:file rw_file_perms;
+allow initrc_t var_log_t:file rw_file_perms;
+
+# Unlink /var/run/random-seed.
+allow initrc_t var_run_t:file unlink;
+
+# Create lock file.
+allow initrc_t var_lock_t:dir create_dir_perms;
+allow initrc_t var_lock_t:file create_file_perms;
+
+# Set the clock.
+allow initrc_t clock_device_t:devfile_class_set rw_file_perms;
+
+# Kill all processes.
+allow initrc_t domain:process signal_perms;
+
+# Read and unlink /var/run/*.pid files.
+allow initrc_t pidfile:file { getattr read unlink };
+
+# Write to /dev/urandom.
+allow initrc_t random_device_t:chr_file rw_file_perms;
+
+# Read /dev/psaux (for kudzu).
+allow initrc_t psaux_t:chr_file r_file_perms;
+
+# Read /dev/cdrom.
+allow initrc_t misc_device_t:lnk_file r_file_perms;
+
+# Stat any file.
+allow initrc_t file_type:file_class_set getattr;
+allow initrc_t file_type:dir { search getattr };
+
+# Read and write ttys.
+allow initrc_t tty_device_t:chr_file rw_file_perms;
+
+# Reset tty labels.
+allow initrc_t tty_device_t:chr_file relabelto;
+
+# Make initrc_t unconfined for now.
+unconfined_domain(initrc_t)

@@ -1,0 +1,191 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+################################################
+#
+# Role-based access control (RBAC) configuration.
+#
+
+#
+#
+
+########################################
+#
+# Role declarations.
+#
+# Each role has a set of types (domains) that may
+# be entered by processes in the role.
+# The syntax of a role declaration is:
+# 	role rolename types type_set ;
+#
+
+#
+# system_r is the role of system processes.
+#
+role system_r types {
+	kernel_t
+	kmod_t
+	any_socket_t
+	tcp_socket_t
+	icmp_socket_t
+	init_t
+	initrc_t
+	getty_t
+	syslogd_t
+	klogd_t
+	crond_t
+	system_crond_t
+	atd_t 
+	lpd_t 
+	inetd_t 
+	tcpd_t 
+	rlogind_t
+	sshd_t
+	rshd_t
+	ftpd_t
+	inetd_child_t
+        sendmail_t
+	cardmgr_t
+	apmd_t
+	ypbind_t
+	gpm_t
+	portmap_t
+	rpcd_t 
+	xfs_t
+	local_login_t
+	remote_login_t
+	depmod_t
+	modprobe_t
+	insmod_t
+	rmmod_t
+        fsadm_t
+	ifconfig_t
+	dhcp_t
+	logrotate_t
+	user_mail_t	# mail sent by crond
+};
+
+#
+# user_r is the role for unprivileged users.
+#
+role user_r types {
+	user_t 
+	passwd_t	
+	utempter_t
+	newrole_t
+	user_lpr_t
+        user_mail_t
+	user_xserver_t
+	user_gph_t
+	user_su_t
+	user_mozilla_t
+	user_crontab_t
+	user_crond_t
+	user_ftpd_t
+};
+
+#
+# sysadm_r is the role for the system administrator.
+#
+role sysadm_r types { 
+	sysadm_t
+	ifconfig_t
+	fsadm_t
+	depmod_t
+	modprobe_t
+	insmod_t
+	rmmod_t
+	passwd_t
+	utempter_t
+	logrotate_t
+	newrole_t
+	sysadm_lpr_t
+        sysadm_mail_t
+	sysadm_xserver_t
+	sysadm_gph_t
+	sysadm_su_t
+	sysadm_mozilla_t
+	sysadm_crontab_t
+        sysadm_crond_t
+	sysadm_ftpd_t
+};
+
+
+########################################
+#
+# Role transition rules and role allow rules.
+#
+# A role transition rule specifies the default
+# role of a transformed process based on its prior
+# role and the type of the program executable.
+# If no rule is specified, then the default role
+# of a process is the same as its role prior to
+# the execve call.
+#
+# The syntax of a role transition is:
+# 	role_transition current_role program_type new_role ;
+#
+# A role allow rule specifies the allowable
+# transitions between roles on an execve.
+# If no rule is specified, then the change in
+# roles will not be permitted.  Additional
+# controls over role transitions based on the
+# type of the process may be specified through
+# the constraints file.
+#
+# The syntax of a role allow rule is:
+# 	allow current_role new_role ;
+#
+
+#############################
+#
+# role_auto_trans(current_role, program_type, new_role)
+#
+# Define a default role transition and allow it.
+#
+define(`role_auto_trans', `
+role_transition $1 $2 $3;
+allow $1 $3;
+')
+
+#
+# Allow the system_r role to transition 
+# into any of the user roles.
+#
+allow system_r user_r;
+allow system_r sysadm_r;
+
+#
+# Allow the user roles to transition
+# into each other.
+#
+allow user_r sysadm_r;
+allow sysadm_r user_r;

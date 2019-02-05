@@ -1,0 +1,88 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#
+# su_exec_t is the type of the su executable.
+#
+type su_exec_t, file_type, sysadmfile, exec_type;
+
+
+#################################
+#
+# su_domain(domain_prefix)
+#
+# Define a su domain for a user domain.
+#
+define(`su_domain',`
+
+type $1_su_t, domain, privlog, auth;
+
+# Enter by the su executable.
+domain_auto_trans($1_t, su_exec_t, $1_su_t)
+
+# Revert to the user domain when a shell is executed.
+domain_auto_trans($1_su_t, shell_exec_t, $1_t)
+
+# No need for privilege increase protections on su -> user shell transition.
+allow $1_su_t $1_t:process noprivinc;
+
+# Create/update /var/adm/sulog.
+allow $1_su_t var_log_t:dir rw_dir_perms;
+allow $1_su_t var_log_t:file create_file_perms;
+
+# Execute xauth.
+can_exec($1_su_t, bin_t)
+
+# Use privileges
+allow $1_su_t self:privilege_class_set { file_dac_write proc_taskid proc_setid };
+
+# Inherit and use descriptors from login.
+allow $1_su_t local_login_t:fd inherit_fd_perms;
+allow $1_su_t remote_login_t:fd inherit_fd_perms;
+
+# Inherit and use descriptors from gnome-pty-helper.
+allow $1_su_t $1_gph_t:fd inherit_fd_perms;
+allow $1_t $1_gph_t:fd inherit_fd_perms;
+
+# Read /etc/shadow.
+allow $1_su_t shadow_t:file r_file_perms;
+
+# Write to utmp.
+allow $1_su_t initrc_var_run_t:file rw_file_perms;
+
+# Use the network.
+can_network($1_su_t)
+
+# Write to the user domain tty.
+allow $1_su_t $1_tty_device_t:chr_file rw_file_perms;
+allow $1_su_t $1_devpts_t:chr_file rw_file_perms;
+
+# Modify .Xauthority file (via xauth program).
+allow $1_su_t $1_home_t:dir rw_dir_perms;
+allow $1_su_t $1_home_t:file create_file_perms;
+
+')
+

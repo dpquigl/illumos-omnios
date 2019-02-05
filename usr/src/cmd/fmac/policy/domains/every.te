@@ -1,0 +1,217 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+##################################
+#
+# Rules for every domain.
+#
+
+# Allow basic privileges.
+allow domain self:privilege_class_set { file_link_any proc_exec proc_fork proc_info proc_session };
+
+# Access other processes in the same domain.
+allow domain self:process *;
+
+# Access file descriptions, pipes, and sockets
+# created by processes in the same domain.
+allow domain self:fd *;
+allow domain self:pipe *;
+allow domain self:{ socket udp_socket unix_dgram_socket } *;
+allow domain self:{ tcp_socket unix_stream_socket } *;
+
+# Use the system shared libraries.
+uses_shlib(domain)
+
+# Read/search default file type.
+allow domain default_t:dir r_dir_perms;
+allow domain default_t:file r_file_perms;
+
+# Read/search directories/files that have no secctx.
+# This shows up for e.g. mount points and unlabeled filesystems.
+allow domain file_t:dir r_dir_perms;
+allow domain file_t:file r_file_perms;
+
+# Get attributes of file systems.
+allow domain fs_type:filesystem getattr;
+
+# Read /proc/PID files for processes in the same domain.
+allow domain self:dir r_dir_perms;
+allow domain self:notdevfile_class_set r_file_perms;
+
+# Read system information files in /proc.
+allow domain proc_t:dir r_dir_perms;
+allow domain proc_t:notdevfile_class_set r_file_perms;
+
+# Stat /proc/kmsg and /proc/kcore.
+allow domain proc_kmsg_t:file stat_file_perms;
+allow domain proc_kcore_t:file stat_file_perms;
+
+# Read system variables in /proc/sys.
+allow domain sysctl_modprobe_t:file r_file_perms;
+allow domain sysctl_t:file r_file_perms;
+allow domain sysctl_t:dir r_dir_perms;
+allow domain sysctl_fs_t:file r_file_perms;
+allow domain sysctl_fs_t:dir r_dir_perms;
+allow domain sysctl_kernel_t:file r_file_perms;
+allow domain sysctl_kernel_t:dir r_dir_perms;
+allow domain sysctl_net_t:file r_file_perms;
+allow domain sysctl_net_t:dir r_dir_perms;
+allow domain sysctl_vm_t:file r_file_perms;
+allow domain sysctl_vm_t:dir r_dir_perms;
+allow domain sysctl_dev_t:file r_file_perms;
+allow domain sysctl_dev_t:dir r_dir_perms;
+
+# Read /dev/pts.
+allow domain devpts_t:dir r_dir_perms;
+
+# Read /.
+allow domain root_t:dir r_dir_perms;
+allow domain root_t:notdevfile_class_set r_file_perms;
+
+# Create and unlink files from /tmp.
+allow domain tmp_t:dir rw_dir_perms;
+
+# Read /var.
+allow domain var_t:dir r_dir_perms;
+allow domain var_t:notdevfile_class_set r_file_perms;
+
+# Read /var/lib.
+allow domain var_lib_t:dir r_dir_perms;
+allow domain var_lib_t:notdevfile_class_set r_file_perms;
+
+# Read /var/yp.
+allow domain var_yp_t:dir r_dir_perms;
+allow domain var_yp_t:notdevfile_class_set r_file_perms;
+
+# Read /var/spool.
+allow domain var_spool_t:dir r_dir_perms;
+allow domain var_spool_t:notdevfile_class_set r_file_perms;
+
+# Read /var/run, /var/lock, /var/log.
+allow domain var_run_t:dir r_dir_perms;
+allow domain var_run_t:file r_file_perms;
+allow domain var_log_t:dir r_dir_perms;
+allow domain var_log_t:file r_file_perms;
+allow domain var_lock_t:dir r_dir_perms;
+allow domain var_lock_t:file r_file_perms;
+
+# Read /var/run/utmp and /var/log/wtmp.
+allow domain initrc_var_run_t:file r_file_perms;
+allow domain wtmp_t:file r_file_perms;
+
+# Read /boot and /boot/kernel.h.
+allow domain boot_t:dir r_dir_perms;
+allow domain boot_t:file r_file_perms;
+allow domain boot_runtime_t:file r_file_perms;
+
+# Read /etc.
+allow domain etc_t:dir r_dir_perms;
+allow domain etc_t:notdevfile_class_set r_file_perms;
+allow domain etc_runtime_t:file r_file_perms;
+allow domain etc_aliases_t:file r_file_perms;
+allow domain etc_mail_t:dir r_dir_perms;
+allow domain etc_mail_t:file r_file_perms;
+
+# Read /lib.
+allow domain lib_t:dir r_dir_perms;
+allow domain lib_t:notdevfile_class_set r_file_perms;
+
+# Read /bin and /sbin.
+allow domain bin_t:dir r_dir_perms;
+allow domain bin_t:notdevfile_class_set r_file_perms;
+allow domain sbin_t:dir r_dir_perms;
+allow domain sbin_t:notdevfile_class_set r_file_perms;
+
+# Read /usr.
+allow domain usr_t:dir r_dir_perms;
+allow domain usr_t:notdevfile_class_set r_file_perms;
+
+# Read man directories and files.
+allow domain man_t:dir r_dir_perms;
+allow domain man_t:notdevfile_class_set r_file_perms;
+
+# Read /usr/src.
+allow domain src_t:dir r_dir_perms;
+allow domain src_t:notdevfile_class_set r_file_perms;
+
+# Read home directory types.
+allow domain home_type:dir r_dir_perms;
+allow domain home_type:notdevfile_class_set r_file_perms;
+
+# Read polyinstantiated directories.
+allow domain poly_t:dir r_dir_perms;
+
+# Search and read module-related files.
+allow domain modules_object_t:dir r_dir_perms;
+allow domain modules_object_t:file r_file_perms;
+allow domain modules_dep_t:file r_file_perms;
+allow domain modules_conf_t:file r_file_perms;
+
+# Read /dev.
+allow domain device_t:dir r_dir_perms;
+
+# Read and write /dev/tty, /dev/null, /dev/random,
+# and (for now) /dev/console.
+allow domain devtty_t:chr_file rw_file_perms;
+allow domain null_device_t:chr_file rw_file_perms;
+allow domain random_device_t:chr_file r_file_perms;
+# FIXME! Only grant to domains which require console access.
+allow domain console_device_t:chr_file rw_file_perms;
+
+# Send SIGCHLD to init.
+allow domain init_t:process sigchld;
+
+# Inherit and use descriptors from login.
+allow domain local_login_t:fd inherit_fd_perms;
+allow domain remote_login_t:fd inherit_fd_perms;
+allow domain sshd_t:fd inherit_fd_perms;
+
+# Create and use NFS files.
+# FIXME!  Only grant to domains that truly need this access.
+allow domain nfs_t:dir create_dir_perms;
+allow domain nfs_t:notdevfile_class_set create_file_perms;
+allow domain nfs_clipper_t:dir create_dir_perms;
+allow domain nfs_clipper_t:notdevfile_class_set create_file_perms;
+
+# Use the network.
+# FIXME!  Only grant to domains that truly need this access.
+can_network(domain)
+
+# Bind to port numbers with the default port number type.
+# FIXME!  Only grant to domains that truly need this access.
+allow domain port_t:udp_socket name_bind;
+allow domain port_t:tcp_socket name_bind;
+
+# Communicate with portmap.
+# FIXME!  Only grant to domains that truly need this access.
+can_udp_send(domain,portmap_t)
+can_udp_send(portmap_t, domain)
+

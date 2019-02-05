@@ -27,6 +27,18 @@
 # Make sure that the libraries essential to this stage of booting can be found.
 LD_LIBRARY_PATH=/lib; export LD_LIBRARY_PATH
 
+# Set directory and library labels before mounting.
+set_labels()
+{
+	if [ `/sbin/getenforce` != "disabled" ] ; then
+		/sbin/setfiles /etc/security/fmac/file_contexts \
+		    /lib/libc.so.1 \
+		    /tmp \
+		    /var/run \
+		    /etc/svc/volatile
+	fi
+}
+
 libc_mount() {
 	#
 	# If there is an optimized libc available in /usr that fits this
@@ -60,6 +72,7 @@ libc_mount() {
 # it needs to currently exist for all zones.
 #
 if smf_is_nonglobalzone; then
+	set_labels
 	libc_mount
 	exit $SMF_EXIT_OK
 fi
@@ -158,6 +171,7 @@ fi
 #
 /usr/sbin/devfsadm -I -P
 
+set_labels
 libc_mount
 
 exit $SMF_EXIT_OK

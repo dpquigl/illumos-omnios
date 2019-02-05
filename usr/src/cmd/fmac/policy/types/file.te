@@ -1,0 +1,228 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#######################################
+#
+# General file-related types
+#
+
+#
+# unlabeled_t is the type of unlabeled objects.
+# Eventually, once all objects are labeled and 
+# controlled by the security policy, unlabeled_t 
+# will not be used.
+#
+type unlabeled_t, fs_type, root_dir_type;
+
+#
+# fs_t is the default type of an unlabeled
+# file system.  When an unlabeled file system is
+# mounted read-write, the file system is labeled
+# with this type.  Except for the root file system,
+# other types may be specified using the fs_contexts
+# or fs_contexts.mls file.
+#
+type fs_t, fs_type;
+
+#
+# file_t is the default type of an unlabeled
+# file.  When an unlabeled file system is mounted
+# read-write, all files in the file system are labeled
+# with this type.   Except for the root file system,
+# other types may be specified using the fs_contexts
+# or fs_contexts.mls file.
+#
+type file_t, file_type, root_dir_type, sysadmfile;
+
+# 
+# Default type for unspecified files in file_contexts.
+#
+type default_t, file_type, root_dir_type, sysadmfile;
+
+#
+# root_t is the type for the root directory.
+#
+type root_t, file_type, sysadmfile;
+
+#
+# lost_found_t is the type for the lost+found directories.
+#
+type lost_found_t, file_type, sysadmfile;
+
+#
+# boot_t is the type for files in /boot,
+# including the kernel.
+#
+type boot_t, file_type, root_dir_type, sysadmfile;
+
+#
+# boot_runtime_t is the type for /boot/kernel.h,
+# which is automatically generated at boot time.
+#
+type boot_runtime_t, file_type, sysadmfile;
+
+#
+# tmp_t is the type of /tmp and /var/tmp.
+#
+type tmp_t, file_type, sysadmfile, tmpfile;
+
+#
+# etc_t is the type of the system etc directories.
+#
+type etc_t, file_type, sysadmfile;
+
+#
+# etc_runtime_t is the type of various
+# files in /etc that are automatically
+# generated during initialization.
+#
+type etc_runtime_t, file_type, sysadmfile;
+
+#
+# shadow_t is the type of /etc/shadow.
+#
+type shadow_t, file_type, sysadmfile;
+
+#
+# etc_aliases_t is the type of the aliases database.
+# etc_mail_t is the type of /etc/mail.
+# sendmail needs write access to these files.
+#
+type etc_aliases_t, file_type, sysadmfile;
+type etc_mail_t, file_type, sysadmfile;
+
+#
+# lib_t is the type of files in the system lib directories.
+#
+type lib_t alias shlib_t, file_type, sysadmfile;
+
+#
+# ld_so_t is the type of the system dynamic loaders.
+#
+type ld_so_t, file_type, sysadmfile;
+
+#
+# bin_t is the type of files in the system bin directories.
+#
+type bin_t alias sbin_t, file_type, sysadmfile;
+
+#
+# ls_exec_t is the type of the ls program.
+#
+type ls_exec_t, file_type, exec_type, sysadmfile;
+
+#
+# chkpwd_exec_t is the type of the pwdb_chkpwd program.
+#
+type chkpwd_exec_t, file_type, exec_type, sysadmfile;
+
+#
+# usr_t is the type for /usr.
+#
+type usr_t, file_type, sysadmfile;
+
+#
+# src_t is the type of files in the system src directories.
+#
+type src_t, file_type, sysadmfile;
+
+#
+# var_t is the type for /var.
+#
+type var_t, file_type, sysadmfile;
+
+#
+# Types for subdirectories of /var.
+#
+type var_run_t, file_type, sysadmfile;
+type var_log_t, file_type, sysadmfile;
+type var_lock_t, file_type, sysadmfile;
+type var_lib_t, file_type, sysadmfile;
+type var_spool_t, file_type, sysadmfile;
+type var_yp_t, file_type, sysadmfile;
+
+#
+# wtmp_t is the type of /var/log/wtmp.
+#
+type wtmp_t, file_type, sysadmfile;
+
+#
+# catman_t is the type for /var/catman.
+#
+type catman_t, file_type, sysadmfile;
+
+#
+# at_spool_t is the type for /var/spool/at.
+#
+type at_spool_t, file_type, sysadmfile;
+
+#
+# cron_spool_t is the type for /var/spool/cron.
+#
+type cron_spool_t, file_type, sysadmfile;
+
+#
+# lpd_spool_t is the type for /var/spool/lpd.
+#
+type lpd_spool_t, file_type, sysadmfile;
+
+#
+# mail_spool_t is the type for /var/spool/mail.
+#
+type mail_spool_t, file_type, sysadmfile;
+
+#
+# mqueue_spool_t is the type for /var/spool/mqueue.
+#
+type mqueue_spool_t, file_type, sysadmfile;
+
+#
+# man_t is the type for the man directories.
+#
+type man_t, file_type, sysadmfile;
+
+#
+# poly_t is the type for the polyinstantiated directories.
+#
+type poly_t, file_type, sysadmfile;
+
+#
+# Allow each file type to be associated with 
+# the default file system type.
+#
+allow file_type fs_t:filesystem associate;
+
+#
+# Allow each file type to be mounted on a directory
+# with the same type.
+#
+allow file_type self:dir mountassociate;
+
+#
+# Allow each root directory to be mounted
+# on a directory with the default file type.
+#
+allow root_dir_type file_t:dir mountassociate;

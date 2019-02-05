@@ -1,0 +1,63 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the kmod_t domain.
+#
+# kmod_t is the domain of the kernel module loader. 
+#
+type kmod_t, domain, privlog;
+
+# Use the sys_module and setpcap capabilities.
+allow kmod_t kmod_t:capability { sys_module setpcap kill };
+
+# Inherit and use descriptors from init.
+allow kmod_t init_t:fd inherit_fd_perms;
+
+# Use a pipe created by initrc_t.
+allow kmod_t initrc_t:pipe rw_file_perms;
+
+# Run modprobe and insmod in the kmod_t domain.
+can_exec(kmod_t,modprobe_exec_t)
+can_exec(kmod_t,insmod_exec_t)
+
+# Read conf.modules.
+allow kmod_t modules_conf_t:file r_file_perms;
+
+# Run shell commands from conf.modules.
+can_exec_any(kmod_t)
+
+# Read modules.dep.
+allow kmod_t modules_dep_t:file r_file_perms;
+
+# Read module objects.
+allow kmod_t modules_object_t:dir r_dir_perms;
+allow kmod_t modules_object_t:file r_file_perms;
+
+# Signal any domain.
+allow kmod_t domain:process signal;
+

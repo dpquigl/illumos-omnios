@@ -1,0 +1,68 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the logrotate_t domain.
+#
+# logrotate_t is the domain for the logrotate program.
+# logrotate_exec_t is the type of the corresponding program.
+#
+type logrotate_t, domain, privowner;
+type logrotate_exec_t, file_type, sysadmfile, exec_type;
+
+# Create temporary files.
+type logrotate_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(logrotate_t, tmp_t, logrotate_tmp_t)
+
+# Run helper programs.
+can_exec_any(logrotate_t)
+
+# Read PID files.
+allow logrotate_t pidfile:file r_file_perms;
+
+# Read /proc/PID directories for all domains.
+allow logrotate_t domain:notdevfile_class_set r_file_perms;
+allow logrotate_t domain:dir r_dir_perms;
+
+# Signal processes.
+allow logrotate_t domain:process signal;
+
+# Modify /var/log.
+allow logrotate_t var_log_t:dir rw_dir_perms;
+
+# Create, rename, and truncate log files.
+allow logrotate_t var_log_t:file create_file_perms;
+allow logrotate_t cron_log_t:file create_file_perms;
+allow logrotate_t sendmail_var_log_t:file create_file_perms;
+allow logrotate_t wtmp_t:file create_file_perms;
+
+# Change ownership on log files.
+allow logrotate_t logrotate_t:capability chown;
+
+# Write to /var/lib/logrotate.status.
+allow logrotate_t var_lib_t:dir rw_dir_perms;
+allow logrotate_t var_lib_t:file create_file_perms;

@@ -1,0 +1,68 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+############################################
+#
+# Security types
+#
+
+# 
+# security_t is the target type when checking
+# most of the permissions in the security class.
+# The two exceptions are sid_to_context and load_policy.
+# The sid_to_context permission uses the type attribute
+# of the SID parameter, and the load_policy permission
+# uses the type of the policy file.
+#
+type security_t;
+
+#
+# policy_config_t is the type of /ss_policy,
+# the security server policy configuration.
+#
+type policy_config_t, file_type, sysadmfile;
+
+#
+# policy_src_t is the type of the policy source
+# files.
+#
+type policy_src_t, file_type, sysadmfile;
+
+#
+# file_labels_t is the type of the persistent
+# label mapping stored in each file system.
+# The mapping files are in the ...security
+# subdirectory at the root of each file system.
+#
+type file_labels_t, file_type, sysadmfile;
+
+#
+# no_access_t is the type for objects that should
+# only be accessed administratively. 
+#
+type no_access_t, file_type, sysadmfile;
+
+

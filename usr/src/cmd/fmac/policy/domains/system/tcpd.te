@@ -1,0 +1,53 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the tcpd_t domain.
+#
+type tcpd_t, domain, privlog;
+type tcpd_exec_t, file_type, sysadmfile, exec_type;
+
+type tcpd_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(tcpd_t, tmp_t, tcpd_tmp_t)
+
+# Use sockets inherited from inetd.
+allow tcpd_t inetd_t:tcp_socket rw_stream_socket_perms;
+
+# Use the network
+can_network(tcpd_t)
+
+# Run rlogind and telnetd in rlogind_t
+domain_auto_trans(tcpd_t, rlogind_exec_t, rlogind_t)
+
+# Run rshd in rshd_t
+domain_auto_trans(tcpd_t, rshd_exec_t, rshd_t)
+
+# Run ftpd in ftpd_t
+domain_auto_trans(tcpd_t, ftpd_exec_t, ftpd_t)
+
+# Run other daemons in the inetd_child_t domain.
+domain_auto_trans(tcpd_t, inetd_child_exec_t, inetd_child_t)

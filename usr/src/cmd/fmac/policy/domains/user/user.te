@@ -1,0 +1,220 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# The user_domain macro and the 
+# user_t domain.
+#
+
+#
+# shell_exec_t is the type of shell programs.
+#
+type shell_exec_t, file_type, sysadmfile, exec_type;
+
+
+#################################
+# 
+# user_domain(domain_prefix)
+#
+# Rules for all user login domains.
+#
+
+define(`user_domain',`
+
+type $1_home_t, file_type, sysadmfile, home_type;
+type $1_tmp_t, file_type, sysadmfile, tmpfile;
+type $1_tty_device_t, file_type, sysadmfile;
+
+# Allow home directories to be mounted.
+allow $1_home_t file_t:dir mountassociate;
+
+# Use capabilities
+allow $1_t self:capability { net_bind_service dac_override setuid setgid };
+
+# Use the network.
+can_network($1_t)
+
+# Run helper programs.
+can_exec_any($1_t)
+
+# Bind to a Unix domain socket in /tmp.
+allow $1_t $1_tmp_t:unix_stream_socket name_bind;
+
+# Run programs developed by other users in the same domain.
+can_exec($1_t, $1_home_t)
+can_exec($1_t, $1_tmp_t)
+
+# Connect to inetd.
+can_tcp_connect($1_t,inetd_t)
+
+# Connect second port to rshd.
+can_tcp_connect(rshd_t, $1_t)
+
+# Inherit and use sockets from inetd.
+allow $1_t inetd_t:fd inherit_fd_perms;
+allow $1_t inetd_t:tcp_socket rw_stream_socket_perms;
+
+# Connect data port to ftpd.
+can_tcp_connect(ftpd_t, $1_t)
+
+# Create and use files in user home directories.
+allow $1_t $1_home_t:dir create_dir_perms;
+allow $1_t $1_home_t:notdevfile_class_set create_file_perms;
+
+# Create and use polyinstantiated directories.
+allow $1_t poly_t:dir create_dir_perms;
+
+# Redirect processes in this domain when they access
+# a polyinstantiated directory to a member subdirectory 
+# that has the corresponding home directory type.
+type_member $1_t poly_t:dir $1_home_t;
+
+# Read and write /var/catman.
+allow $1_t catman_t:dir rw_dir_perms;
+allow $1_t catman_t:notdevfile_class_set create_file_perms;
+
+# Modify mail spool file.
+allow $1_t mail_spool_t:dir r_dir_perms;
+allow $1_t mail_spool_t:file rw_file_perms;
+
+# Allow ttys to be relabeled during system boot.
+allow initrc_t $1_tty_device_t:chr_file relabelfrom;
+
+# Allow initrc, getty and login to access ttys if they were not relabeled.
+allow initrc_t $1_tty_device_t:chr_file rw_file_perms;
+allow getty_t $1_tty_device_t:chr_file rw_file_perms;
+allow local_login_t $1_tty_device_t:chr_file rw_file_perms;
+
+# Allow login to relabel ttys upon local login.
+type_change $1_t tty_device_t:chr_file $1_tty_device_t;
+allow local_login_t $1_tty_device_t:chr_file { getattr relabelfrom relabelto };
+allow tty_device_t $1_tty_device_t:chr_file transition;
+allow $1_tty_device_t tty_device_t:chr_file transition;
+
+# Allow login to relabel ptys upon remote login.
+type_change $1_t rlogind_devpts_t:chr_file $1_devpts_t;
+allow remote_login_t $1_devpts_t:chr_file { getattr relabelfrom relabelto };
+allow rlogind_devpts_t $1_devpts_t:chr_file transition;
+allow $1_devpts_t rlogind_devpts_t:chr_file transition;
+
+# Use ttys.
+allow $1_t $1_tty_device_t:chr_file rw_file_perms;
+
+# Create and use ptys.
+can_create_pty($1)
+
+# Run the passwd wrapper program in the passwd_t domain.
+domain_auto_trans($1_t, passwd_exec_t, passwd_t)
+allow passwd_t $1_tty_device_t:chr_file rw_file_perms;
+allow passwd_t $1_devpts_t:chr_file rw_file_perms;
+allow passwd_t $1_gph_t:fd inherit_fd_perms;
+
+# Run utempter in the utempter_t domain.
+# Allow utempter_t to inherit and use descriptors from parent user domain.
+domain_auto_trans($1_t, utempter_exec_t, utempter_t)
+allow utempter_t $1_tty_device_t:chr_file getattr;
+allow utempter_t $1_devpts_t:chr_file getattr;
+
+# Run the newrole program in the newrole_t domain.
+domain_auto_trans($1_t, newrole_exec_t, newrole_t)
+allow newrole_t $1_tty_device_t:chr_file rw_file_perms;
+allow newrole_t $1_devpts_t:chr_file rw_file_perms;
+allow newrole_t $1_gph_t:fd inherit_fd_perms;
+
+# Run gnome-pty-helper in a separate domain corresponding to this user domain.
+gph_domain($1)
+
+# Allow transition from gnome-pty-helper to utempter_t
+domain_auto_trans($1_gph_t, utempter_exec_t, utempter_t)
+
+# Run su in a separate domain.
+su_domain($1)
+
+# Run mozilla in a separate domain.
+mozilla_domain($1)
+
+# Run the X server, lpr/lpq/lprm, and sendmail in appropriate domains.
+xserver_domain($1)
+lpr_domain($1)
+mail_domain($1)
+
+# Run users cron jobs and crontab in a separate domain.  
+crond_domain($1)
+crontab_domain($1)
+
+# Run user ftp sessions in a separate domain.
+ftpd_domain($1)
+
+# Read /dev/psaux.
+allow $1_t psaux_t:chr_file r_file_perms;
+
+# Access miscellaneous devices.
+allow $1_t misc_device_t:file_class_set rw_file_perms;
+
+# Access System V IPC mechanisms
+# Allows communication within a domain, but not between
+allow $1_t $1_t:sem rw_sem_perms;
+allow $1_t $1_t:msg { send receive };
+allow $1_t $1_t:msgq rw_msgq_perms;
+allow $1_t $1_t:shm rw_shm_perms;
+# Very permissive allowing every domain to see every type
+allow $1_t *:system { ipc_info };
+
+# Create temporary files.
+file_type_auto_trans($1_t, tmp_t, $1_tmp_t)
+
+# Allow relabeling from /tmp to /export/home
+allow $1_t $1_tmp_t:file relabelto;
+
+# When the user domain runs ps, there will be a number of access
+# denials when ps tries to search /proc.  Do not audit these denials.
+auditdeny $1_t domain:dir ~r_dir_perms;
+auditdeny $1_t domain:notdevfile_class_set ~r_file_perms;
+
+')
+
+
+#################################
+# 
+# Rules for the user_t domain.
+#
+# user_t is the unprivileged users domain.
+#
+type user_t, domain, userdomain;
+
+# Entered via /usr/dt/config/Xsession.jds for graphical login.
+allow user_t bin_t:file entrypoint;
+
+# /var/tmp/orbit-... access until it gets labeled properly
+allow user_t tmp_t:file r_file_perms;
+
+user_domain(user)

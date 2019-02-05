@@ -1,0 +1,47 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the atd_t domain.
+#
+type atd_t, domain, privlog;
+type atd_exec_t, file_type, sysadmfile, exec_type;
+
+type atd_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(atd_t, tmp_t, atd_tmp_t)
+type atd_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(atd_t, var_run_t, atd_var_run_t)
+
+# Use capabilities.
+allow atd_t atd_t:capability { setgid setuid };
+
+# Inherit and use descriptors from init.
+allow atd_t init_t:fd inherit_fd_perms;
+
+# Write to /var/spool/at.
+allow atd_t at_spool_t:dir rw_dir_perms;
+allow atd_t at_spool_t:file create_file_perms;

@@ -1,0 +1,217 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the crond_t domain, the system_crond_t domain and
+# the crond_domain macro.
+#
+
+type crond_t, domain, privuser, privrole, privlog, privowner, privmem, admin;
+type crond_exec_t, file_type, sysadmfile, exec_type;
+
+type cron_context_t, file_type, sysadmfile;
+
+type crond_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(crond_t, tmp_t, crond_tmp_t)
+type crond_var_run_t, file_type, sysadmfile, pidfile;
+file_type_auto_trans(crond_t, var_run_t, crond_var_run_t)
+type cron_log_t, file_type, sysadmfile;
+file_type_auto_trans(crond_t, var_log_t, cron_log_t)
+
+# Make crond unconfined for now.
+unconfined_domain(crond_t)
+
+# Use capabilities.
+allow crond_t crond_t:capability { setgid setuid net_bind_service };
+
+# Check entrypoint permission on crontab files.
+allow crond_t security_t:security compute_av;
+
+# Inherit and use descriptors from init.
+allow crond_t init_t:fd inherit_fd_perms;
+
+# Use a pipe created by initrc_t.
+allow crond_t initrc_t:pipe rw_file_perms;
+
+# Use the network.
+can_network(crond_t)
+
+# Read from /var/spool/cron.
+allow crond_t cron_spool_t:dir r_dir_perms;
+allow crond_t cron_spool_t:file r_file_perms;
+
+# Read system crontabs
+allow crond_t system_crond_script_t:file r_file_perms;
+allow crond_t system_crond_script_t:dir r_dir_perms;
+
+# Read /etc/security/cron_context
+allow crond_t cron_context_t:file r_file_perms;
+
+# Run a shell
+can_exec(crond_t, shell_exec_t)
+
+# Run the sendmail program in the user_mail_t domain.
+domain_auto_trans(crond_t, sendmail_exec_t, user_mail_t)
+
+# Pipe cron job output to sendmail through user_mail_t.
+allow user_mail_t crond_t:pipe rw_file_perms;
+
+# Inherit and use descriptors from init rc.
+allow user_mail_t initrc_t:fd inherit_fd_perms;
+
+# Use pipe from initrc.
+allow user_mail_t initrc_t:pipe rw_file_perms;
+
+
+#########################################
+#
+# system_crond_t domain
+#
+# Used for running system crontabs
+#
+type system_crond_t, domain, privlog;
+type system_crond_script_t, file_type, sysadmfile;
+
+# Enter through crond.
+domain_trans(crond_t, shell_exec_t, system_crond_t)
+
+# Inherit and use descriptors from initrc.
+allow system_crond_t initrc_t:fd inherit_fd_perms;
+
+# Write to a socket from initrc.
+allow system_crond_t initrc_t:udp_socket rw_socket_perms;
+
+# Use capabilities.
+allow system_crond_t system_crond_t:capability { setgid setuid 
+dac_override fowner net_bind_service };
+
+# Use a pipe created by crond_t.
+allow system_crond_t crond_t:pipe rw_file_perms;
+
+# Read the system crontabs.
+allow system_crond_t system_crond_script_t:file r_file_perms;
+
+# 
+# Since crontab files are not directly executed,
+# crond must ensure that the crontab file has
+# a type that is appropriate for the domain of
+# the system cron job.  It performs an entrypoint
+# permission check for this purpose.
+#
+allow system_crond_t system_crond_script_t:file entrypoint;
+
+# Run helper programs in the system_crond_t domain.
+can_exec_any(system_crond_t)
+
+# Read from /var/spool/cron.
+allow system_crond_t cron_spool_t:dir r_dir_perms;
+allow system_crond_t cron_spool_t:file r_file_perms;
+
+# Write to /var/lib/slocate.db.
+allow system_crond_t var_lib_t:dir rw_dir_perms;
+allow system_crond_t var_lib_t:file create_file_perms;
+
+# Update whatis files.
+allow system_crond_t man_t:dir rw_dir_perms;
+allow system_crond_t man_t:file create_file_perms;
+
+# Write /var/lock/makewhatis.lock.
+allow system_crond_t var_lock_t:dir rw_dir_perms;
+allow system_crond_t var_lock_t:file create_file_perms;
+
+# Run rmmod for /etc/cron.d/kmod in the rmmod_t domain.
+domain_auto_trans(system_crond_t, rmmod_exec_t, rmmod_t)
+allow rmmod_t crond_t:fd inherit_fd_perms;
+allow rmmod_t crond_t:process sigchld;
+
+# Run logrotate in the logrotate_t domain.
+domain_auto_trans(system_crond_t, logrotate_exec_t, logrotate_t)
+allow logrotate_t crond_t:fd inherit_fd_perms;
+allow logrotate_t initrc_t:fd inherit_fd_perms;
+#allow logrotate_t crond_t:process sigchld;
+
+# Stat any file and search any directory for find.
+allow system_crond_t file_type:file_class_set getattr;
+allow system_crond_t file_type:dir { read search getattr };
+
+# Create temporary files.
+type system_crond_tmp_t, file_type, sysadmfile, tmpfile;
+file_type_auto_trans(system_crond_t, tmp_t, system_crond_tmp_t)
+
+# Used for /sbin/tmpwatch
+allow system_crond_t tmpfile:dir { read getattr setattr lock search remove_name rmdir };
+allow system_crond_t tmpfile:notdevfile_class_set link_file_perms;
+allow system_crond_t catman_t:dir { read getattr setattr lock search remove_name rmdir };
+allow system_crond_t catman_t:notdevfile_class_set link_file_perms;
+
+
+#################################
+#
+# The crond_domain macro.
+#
+define(`crond_domain',`
+
+###########################################
+# $1_crond_t
+#
+# Define a crond domain for a user domain.
+# This is the domain used for user cron jobs.
+#
+type $1_crond_t, domain;
+
+# Use capabilities.
+allow $1_crond_t $1_crond_t:capability dac_override;
+
+# Inherit and use descriptors from initrc.
+allow $1_crond_t initrc_t:fd inherit_fd_perms;
+
+# Enter this domain from crond_t.
+domain_trans(crond_t, shell_exec_t, $1_crond_t)
+
+# 
+# Since crontab files are not directly executed,
+# crond must ensure that the crontab file has
+# a type that is appropriate for the domain of
+# the user cron job.  It performs an entrypoint
+# permission check for this purpose.
+#
+allow $1_crond_t $1_cron_spool_t:file entrypoint;
+
+# Use pipe from crond_t.
+allow $1_crond_t crond_t:pipe rw_file_perms;
+
+# Access user files and dirs.
+allow $1_crond_t $1_home_t:file create_file_perms;
+allow $1_crond_t $1_home_t:dir create_dir_perms;
+
+# Run helper programs.
+can_exec_any($1_crond_t)
+
+# Run scripts in user home directory.
+can_exec($1_crond_t, $1_home_t)
+
+')

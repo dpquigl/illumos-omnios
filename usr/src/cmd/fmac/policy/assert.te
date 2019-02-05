@@ -1,0 +1,139 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+##############################
+#
+# Assertions for the type enforcement (TE) configuration.
+#
+
+#
+
+##################################
+#
+# Access vector assertions.
+#
+# An access vector assertion specifies permissions that should not be in
+# an access vector based on a source type, a target type, and a class.
+# If any of the specified permissions are in the corresponding access
+# vector, then the policy compiler will reject the policy configuration.
+# The assertion is checked against the access vectors that have been
+# previously defined in the configuration, so access vector rules after
+# an assertion are not checked.  Currently, there is only one kind of
+# access vector assertion, neverallow, but support for the other
+# kinds of vectors could be easily added.  Access vector assertions use
+# the same syntax as access vector rules.
+#
+
+#
+# Verify that every type that can be entered by
+# a domain is also tagged as a domain.
+#
+neverallow domain ~domain:process transition;
+
+#
+# Verify that only the kmod_t, insmod_t, rmmod_t, and ifconfig_t domains 
+# have the sys_module capability.
+#
+neverallow ~{ kmod_t insmod_t rmmod_t ifconfig_t } self:capability sys_module;
+
+#
+# Verify that executable types, the system dynamic loaders, and the
+# system shared libraries can only be modified by administrators.
+#
+neverallow ~admin { exec_type ld_so_t shlib_t }:file { write append unlink rename };
+
+#
+# Verify that other system software can only be modified by administrators.
+#
+neverallow ~admin { lib_t bin_t sbin_t }:dir { add_name remove_name rename };
+neverallow ~admin { lib_t bin_t sbin_t }:file { write append unlink rename };
+
+#
+# Verify that the shadow password file may only be read
+# and written by the passwd domain and by administrator domains.
+# Verify that the authentication domains are the only other domains
+# that can read this file.
+#
+neverallow ~{ admin passwd_t } shadow_t:file { write append unlink rename };
+neverallow ~{ admin auth } shadow_t:file { read };
+
+#
+# Verify that only the administrator domain and the
+# file system administration domain have access to the raw disk devices.
+#
+neverallow ~{ admin fsadm_t } fixed_disk_device_t:devfile_class_set { read write append };
+
+#
+# Verify that only the administrator domain and 
+# cardmgr can create, rename or unlink device special files.
+#
+neverallow ~{ cardmgr_t admin } file_type:devfile_class_set { create unlink rename };
+
+#
+# Verify that /proc/kmsg is only accessible to klogd.
+#
+neverallow ~klogd_t proc_kmsg_t:file ~stat_file_perms;
+
+#
+# Verify that /proc/kcore is inaccessible.
+#
+neverallow * proc_kcore_t:file ~stat_file_perms;
+
+#
+# Verify that sysctl variables are only changeable
+# by initrc and administrators.
+#
+neverallow ~{ initrc_t admin } sysctl_t:file { write append };
+neverallow ~{ initrc_t admin } sysctl_fs_t:file { write append };
+neverallow ~{ initrc_t admin } sysctl_kernel_t:file { write append };
+neverallow ~{ initrc_t admin } sysctl_net_t:file { write append };
+neverallow ~{ initrc_t admin } sysctl_vm_t:file { write append };
+neverallow ~{ initrc_t admin } sysctl_dev_t:file { write append };
+neverallow ~{ initrc_t admin } sysctl_modprobe_t:file { write append };
+
+#
+# Verify that certain domains are limited to executing
+# code from their entrypoint executables, the dynamic
+# loader or the shared libraries.
+#
+
+define(`assert_execute', `
+    ifelse($#, 0, , 
+           $#, 1, 
+           ``neverallow $1_t ~$1_exec_t:file entrypoint;
+	    neverallow $1_t ~{ $1_exec_t ld_so_t }:file execute_no_trans;'',
+           `assert_execute($1) assert_execute(shift($@))')')
+
+assert_execute(getty, klogd, atd, tcpd, rlogind, 
+    	       ypbind, portmap, rpcd, gpm, xfs, fsadm)
+
+neverallow { local_login_t remote_login_t } ~login_exec_t:file entrypoint;
+neverallow { local_login_t remote_login_t } ~ld_so_t:file execute_no_trans;
+
+#
+# Verify that only the admin domains and initrc_t have setenforce.
+#
+neverallow ~{ admin initrc_t } security_t:security setenforce;

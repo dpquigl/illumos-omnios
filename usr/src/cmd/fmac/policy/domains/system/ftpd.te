@@ -1,0 +1,125 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the "License").
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets "[]" replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#
+# Original files contributed to OpenSolaris.org under license by the
+# United States Government (NSA) to Sun Microsystems, Inc.
+#
+
+#################################
+#
+# Rules for the ftpd_t domain and
+# the ftpd_domain macro.
+#
+type ftpd_t, domain, privlog, auth;
+type ftpd_exec_t, file_type, sysadmfile, exec_type;
+type ftpd_stage2_exec_t, file_type, sysadmfile, exec_type;
+type ftpd_var_run_t, file_type, sysadmfile, pidfile;
+
+# Inherit and use descriptors from inetd.
+allow ftpd_t inetd_t:fd inherit_fd_perms;
+
+# Use sockets inherited from inetd.
+allow ftpd_t inetd_t:tcp_socket rw_stream_socket_perms;
+
+# Use capabilities.
+allow ftpd_t ftpd_t:capability { net_bind_service setuid setgid fowner fsetid chown sys_resource };
+
+# Use the network.
+can_network(ftpd_t)
+
+# Connect to inetd.
+can_tcp_connect(ftpd_t,inetd_t)
+
+# Send SIGCHLD to inetd on death.
+allow ftpd_t inetd_t:process sigchld;
+
+# Create pid files.
+file_type_auto_trans(ftpd_t, var_run_t, ftpd_var_run_t)
+
+# Read /etc/shadow.
+allow ftpd_t shadow_t:file r_file_perms;
+
+# Append to /var/log/wtmp.
+allow ftpd_t wtmp_t:file append;
+
+# Append to /var/log/xferlog.
+allow ftpd_t var_log_t:file append;
+
+# Execute /bin/ls.
+# XXX This is unnecessary when using the two-stage modified ftpd,
+# XXX since only the second stage requires this permission.
+can_exec(ftpd_t, ls_exec_t)
+
+
+#################################
+#
+# ftpd_domain(user_domain)
+#
+# Define a ftpd domain for a user domain.
+#
+define(`ftpd_domain',`
+
+type $1_ftpd_t, domain, privlog;
+
+# Enter this domain from ftpd_t.
+# Commented out - modified ftpd removed from distribution for now.
+#domain_trans(ftpd_t, ftpd_stage2_exec_t, $1_ftpd_t)
+
+# Inherit and use descriptors from inetd.
+allow $1_ftpd_t inetd_t:fd inherit_fd_perms;
+
+# Use sockets inherited from inetd.
+allow $1_ftpd_t inetd_t:tcp_socket rw_stream_socket_perms;
+
+# Use capabilities.
+allow $1_ftpd_t $1_ftpd_t:capability { net_bind_service setuid setgid fowner fsetid chown sys_resource dac_override dac_read_search };
+
+# Use the network.
+can_network($1_ftpd_t)
+
+# Connect to inetd.
+can_tcp_connect($1_ftpd_t,inetd_t)
+
+# Connect to ftp client.
+can_tcp_connect($1_ftpd_t,$1_t)
+
+# Send SIGCHLD to inetd on death.
+allow $1_ftpd_t inetd_t:process sigchld;
+
+# Create pid files.
+file_type_auto_trans($1_ftpd_t, var_run_t, ftpd_var_run_t)
+
+# Append to /var/log/wtmp.
+allow $1_ftpd_t wtmp_t:file append;
+
+# Append to /var/log/xferlog.
+allow $1_ftpd_t var_log_t:file append;
+
+# Execute /bin/ls.
+can_exec($1_ftpd_t, ls_exec_t)
+
+# Access user home directories and files.
+allow $1_ftpd_t $1_home_t:file create_file_perms;
+allow $1_ftpd_t $1_home_t:dir create_dir_perms;
+
+')
+
