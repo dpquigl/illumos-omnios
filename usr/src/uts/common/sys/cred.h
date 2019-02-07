@@ -35,6 +35,7 @@
 #define	_SYS_CRED_H
 
 #include <sys/types.h>
+#include <sys/fmac/flask_types.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -81,8 +82,9 @@ extern void crset(struct proc *, cred_t *);
 extern void crset_zone_privall(cred_t *);
 extern int groupmember(gid_t, const cred_t *);
 extern int supgroupmember(gid_t, const cred_t *);
-extern int hasprocperm(const cred_t *, const cred_t *);
-extern int prochasprocperm(struct proc *, struct proc *, const cred_t *);
+extern int hasprocperm(const cred_t *, const cred_t *, access_vector_t);
+extern int prochasprocperm(struct proc *, struct proc *, const cred_t *,
+		access_vector_t);
 extern int crcmp(const cred_t *, const cred_t *);
 extern cred_t *zone_kcred(void);
 
@@ -140,6 +142,16 @@ extern struct zone *crgetzone(const cred_t *);
  * Private interface for setting project id in credential.
  */
 extern void crsetprojid(cred_t *, projid_t);
+
+/*
+ * Private interfaces for getting and setting security identifiers.
+ */
+extern security_id_t crgetsecid(cred_t *);
+extern void crsetsecid(cred_t *, security_id_t);
+extern security_id_t crgetexecsecid(cred_t *);
+extern void crsetexecsecid(cred_t *, security_id_t);
+extern security_id_t crgetprevsecid(cred_t *);
+extern void crsetprevsecid(cred_t *, security_id_t);
 
 /*
  * Private interface for nfs.

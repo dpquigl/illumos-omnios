@@ -241,3 +241,4 @@ lwp_mutex_register	252
 cladm			253
 uucopy			254
 umount2			255
+fmacsys			256

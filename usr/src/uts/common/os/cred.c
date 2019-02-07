@@ -65,7 +65,10 @@
 #include <sys/klpd.h>
 #include <sys/varargs.h>
 #include <sys/sysconf.h>
+#include <sys/fmac/flask.h>
+#include <sys/fmac/fmac.h>
 #include <util/qsort.h>
+
 
 
 /* Ephemeral IDs Zones specific data */
@@ -198,6 +201,9 @@ cred_init(void)
 	dummycr->cr_suid = (uid_t)-1;
 	dummycr->cr_sgid = (gid_t)-1;
 
+	dummycr->cr_secid = SECSID_NULL;
+	dummycr->cr_exec_secid = SECSID_NULL;
+	dummycr->cr_prev_secid = SECSID_NULL;
 
 	/*
 	 * kcred is used by anything that needs all privileges; it's
@@ -228,6 +234,8 @@ cred_init(void)
 	CR_EPRIV(kcred) = CR_PPRIV(kcred) = CR_IPRIV(kcred);
 
 	CR_FLAGS(kcred) = NET_MAC_AWARE;
+
+	kcred->cr_secid = SECINITSID_KERNEL;
 
 	/*
 	 * Set up credentials of p0.
@@ -591,13 +599,15 @@ supgroupmember(gid_t gid, const cred_t *cr)
  * (4) otherwise, the check fails
  */
 int
-hasprocperm(const cred_t *tcrp, const cred_t *scrp)
+hasprocperm(const cred_t *tcrp, const cred_t *scrp, access_vector_t perms)
 {
 	if (scrp == tcrp)
 		return (1);
 	if (scrp->cr_zone != tcrp->cr_zone &&
 	    (scrp->cr_zone != global_zone ||
 	    secpolicy_proc_zone(scrp) != 0))
+		return (0);
+	if (fmac_hasprocperm(tcrp, scrp, perms))
 		return (0);
 	if (scrp->cr_uid == tcrp->cr_ruid ||
 	    scrp->cr_ruid == tcrp->cr_ruid ||
@@ -616,7 +626,8 @@ hasprocperm(const cred_t *tcrp, const cred_t *scrp)
  * be held.
  */
 int
-prochasprocperm(proc_t *tp, proc_t *sp, const cred_t *scrp)
+prochasprocperm(proc_t *tp, proc_t *sp, const cred_t *scrp,
+    access_vector_t perms)
 {
 	int rets;
 	cred_t *tcrp;
@@ -632,7 +643,7 @@ prochasprocperm(proc_t *tp, proc_t *sp, const cred_t *scrp)
 	mutex_enter(&tp->p_crlock);
 	crhold(tcrp = tp->p_cred);
 	mutex_exit(&tp->p_crlock);
-	rets = hasprocperm(tcrp, scrp);
+	rets = hasprocperm(tcrp, scrp, perms);
 	crfree(tcrp);
 
 	return (rets);
@@ -719,6 +730,46 @@ auditinfo_addr_t *
 crgetauinfo_modifiable(cred_t *cr)
 {
 	return (CR_AUINFO(cr));
+}
+
+security_id_t
+crgetsecid(cred_t *cr)
+{
+	return (cr->cr_secid);
+}
+
+void
+crsetsecid(cred_t *cr, security_id_t sid)
+{
+	ASSERT(cr->cr_ref <= 2);
+
+	cr->cr_secid = sid;
+}
+
+security_id_t
+crgetexecsecid(cred_t *cr)
+{
+	return (cr->cr_exec_secid);
+}
+
+void
+crsetexecsecid(cred_t *cr, security_id_t sid)
+{
+	ASSERT(cr->cr_ref <= 2);
+
+	cr->cr_exec_secid = sid;
+}
+
+security_id_t
+crgetprevsecid(cred_t *cr)
+{
+	return (cr->cr_prev_secid);
+}
+
+void
+crsetprevsecid(cred_t *cr, security_id_t sid)
+{
+	cr->cr_prev_secid = sid;
 }
 
 zoneid_t

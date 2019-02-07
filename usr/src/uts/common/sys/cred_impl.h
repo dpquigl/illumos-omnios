@@ -31,6 +31,7 @@
 #include <sys/cred.h>
 #include <sys/priv_impl.h>
 #include <sys/sid.h>
+#include <sys/fmac/flask_types.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -80,6 +81,9 @@ struct cred {
 	gid_t		cr_rgid;	/* real group id */
 	uid_t		cr_suid;	/* "saved" user id (from exec) */
 	gid_t		cr_sgid;	/* "saved" group id (from exec) */
+	security_id_t	cr_secid;	/* security identifier */
+	security_id_t	cr_exec_secid;	/* exec security identifier */
+	security_id_t	cr_prev_secid;	/* previous security identifier */
 	cred_priv_t	cr_priv;	/* privileges */
 	projid_t	cr_projid;	/* project */
 	struct zone	*cr_zone;	/* pointer to per-zone structure */

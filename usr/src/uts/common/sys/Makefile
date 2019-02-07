@@ -824,6 +824,26 @@ ISCSITHDRS=		\
 ISOHDRS=			\
 	signal_iso.h
 
+DERIVED_FMACHDRS=		\
+	class_to_string.h	\
+	flask.h			\
+	initial_sid_to_string.h	\
+	av_inherit.h		\
+	common_perm_to_string.h	\
+	av_perm_to_string.h	\
+	av_permissions.h
+
+FMACHDRS=			\
+	avc.h			\
+	avc_ss.h		\
+	flask_types.h		\
+	fmac.h			\
+	security.h
+
+ALL_FMACHDRS=			\
+	$(FMACHDRS)		\
+	$(DERIVED_FMACHDRS)
+
 FMHDRS=				\
 	protocol.h		\
 	util.h
@@ -1162,6 +1182,7 @@ CHECKHDRS=						\
 	$(ISCSITHDRS:%.h=iscsit/%.check)			\
 	$(ISOHDRS:%.h=iso/%.check)			\
 	$(FMHDRS:%.h=fm/%.check)			\
+	$(FMACHDRS:%.h=fmac/%.check)			\
 	$(FMFSHDRS:%.h=fm/fs/%.check)			\
 	$(FMIOHDRS:%.h=fm/io/%.check)			\
 	$(FSHDRS:%.h=fs/%.check)			\
@@ -1213,6 +1234,7 @@ CHECKHDRS=						\
 	$(ROOTFMHDRS)		\
 	$(ROOTFMIOHDRS)		\
 	$(ROOTFMFSHDRS)		\
+	$(ROOTFMACHDRS)		\
 	$(ROOTFSHDRS)		\
 	$(ROOTIBDHDRS)		\
 	$(ROOTIBHDRS)		\
@@ -1262,6 +1284,7 @@ CHECKHDRS=						\
 
 
 install_h:			\
+	FMACDERIVED_H	\
 	$(ROOTDIRS)		\
 	.WAIT			\
 	$(ROOTHDRS)		\
@@ -1277,6 +1300,7 @@ install_h:			\
 	$(ROOTFCHDRS)		\
 	$(ROOTFCIMPLHDRS)	\
 	$(ROOTFCULPHDRS)	\
+	$(ROOTFMACHDRS)		\
 	$(ROOTFMHDRS)		\
 	$(ROOTFMFSHDRS)		\
 	$(ROOTFMIOHDRS)		\
@@ -1337,6 +1361,9 @@ priv_names.h: $(PRIVS_AWK) $(PRIVS_DEF)
 
 usb/usbdevs.h: $(USBDEVS_AWK) $(USBDEVS_DATA)
 	$(AWK) -f $(USBDEVS_AWK) $(USBDEVS_DATA) -H > $@
+
+FMACDERIVED_H:
+	cd $(SRC)/uts/common/sys/fmac; pwd; $(MAKE)
 
 clean:
 	$(RM) $(GENHDRS)

@@ -74,6 +74,7 @@ int	faccessat(int, char *, int, int);
 int	fchmodat(int, char *, int, int);
 int	fchownat(int, char *, uid_t, gid_t, int);
 int	fcntl(int, int, intptr_t);
+int fmacsys(int, void *, void *, void *, void *, void *);
 int64_t	vfork();
 int64_t	forksys(int, int);
 int	fstat(int, struct stat *);
@@ -757,7 +758,8 @@ struct sysent sysent[NSYSCALL] =
 	/* 252 */ SYSENT_CI("lwp_mutex_register", lwp_mutex_register,	2),
 	/* 253 */ SYSENT_CI("cladm",		cladm,		3),
 	/* 254 */ SYSENT_CI("uucopy",		uucopy,		3),
-	/* 255 */ SYSENT_CI("umount2",		umount2,	2)
+	/* 255 */ SYSENT_CI("umount2",		umount2,	2),
+	/* 256 */ SYSENT_CI("fmacsys",		fmacsys,	6)
 };
 
 
@@ -1082,7 +1084,8 @@ struct sysent sysent32[NSYSCALL] =
 	/* 252 */ SYSENT_CI("lwp_mutex_register", lwp_mutex_register,	2),
 	/* 253 */ SYSENT_CI("cladm",		cladm,		3),
 	/* 254 */ SYSENT_CI("uucopy",		uucopy,		3),
-	/* 255 */ SYSENT_CI("umount2",		umount2,	2)
+	/* 255 */ SYSENT_CI("umount2",		umount2,	2),
+	/* 256 */ sysent_ci("fmacsys",		fmacsys,	6)
 };
 #endif /* _SYSCALL32_IMPL */
 

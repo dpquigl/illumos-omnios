@@ -51,6 +51,7 @@
 #include <sys/uadmin.h>
 #include <sys/cmn_err.h>
 #include <sys/policy.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/schedctl.h>
 
 /*
@@ -972,7 +973,7 @@ setprocnice(proc_t *pp, pcnice_t *pcnice)
 	 * Check permissions before changing the nice value.
 	 */
 	if (pcnice->pc_op == PC_SETNICE) {
-		if (!prochasprocperm(pp, curproc, CRED())) {
+		if (!prochasprocperm(pp, curproc, CRED(), PROCESS__SETSCHED)) {
 			mutex_exit(&pp->p_lock);
 			return (EPERM);
 		}
@@ -1142,7 +1143,7 @@ setprocprio(proc_t *pp, pcprio_t *pcprio)
 	 * Check permissions before changing the prio value.
 	 */
 	if (pcprio->pc_op == PC_SETPRIO) {
-		if (!prochasprocperm(pp, curproc, CRED())) {
+		if (!prochasprocperm(pp, curproc, CRED(), PROCESS__SETSCHED)) {
 			mutex_exit(&pp->p_lock);
 			return (EPERM);
 		}

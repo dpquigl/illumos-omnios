@@ -43,6 +43,15 @@ i386_CORE_OBJS += \
 
 sparc_CORE_OBJS +=
 
+CHECK_FOR_MLS =		if $(EGREP) -s '^\#define.CONFIG_FLASK_MLS'	\
+				$(SRC)/common/fmac/ss/ss_impl.h ; then	\
+				echo "mls.o" ;				\
+			else						\
+				echo "" ;				\
+			fi ;
+
+FMAC_MLS_OBJS =		$(CHECK_FOR_MLS:sh)
+
 COMMON_CORE_OBJS +=		\
 		beep.o		\
 		bitset.o	\
@@ -106,7 +115,9 @@ GENUNIX_OBJS +=	\
 		audit_zone.o	\
 		audit_memory.o	\
 		autoconf.o	\
+		avc.o		\
 		avl.o		\
+		avtab.o		\
 		bdev_dsort.o	\
 		bio.o		\
 		bitmap.o	\
@@ -168,6 +179,7 @@ GENUNIX_OBJS +=	\
 		dumpsubr.o	\
 		driver_lyr.o	\
 		dtrace_subr.o	\
+		ebitmap.o	\
 		errorq.o	\
 		etheraddr.o	\
 		evchannels.o	\
@@ -185,6 +197,9 @@ GENUNIX_OBJS +=	\
 		firmload.o	\
 		flock.o		\
 		fm.o		\
+		fmac.o		\
+		fmacsys.o	\
+		$(FMAC_MLS_OBJS)	\
 		fork.o		\
 		vpm.o		\
 		fs_reparse.o	\
@@ -201,6 +216,7 @@ GENUNIX_OBJS +=	\
 		gid.o		\
 		groups.o	\
 		grow.o		\
+		hashtab.o	\
 		hat_refmod.o	\
 		id32.o		\
 		id_space.o	\
@@ -259,6 +275,7 @@ GENUNIX_OBJS +=	\
 		pathconf.o	\
 		pathname.o	\
 		pause.o		\
+		policydb.o	\
 		serializer.o	\
 		pci_intr_lib.o	\
 		pci_cap.o	\
@@ -301,6 +318,7 @@ GENUNIX_OBJS +=	\
 		sad_conf.o	\
 		sid.o		\
 		sidsys.o	\
+		sidtab.o	\
 		sched.o		\
 		schedctl.o	\
 		sctp_crc32.o	\
@@ -315,6 +333,7 @@ GENUNIX_OBJS +=	\
 		seg_umap.o	\
 		semaphore.o	\
 		sendfile.o	\
+		services.o	\
 		session.o	\
 		share.o		\
 		shuttle.o	\
@@ -354,6 +373,7 @@ GENUNIX_OBJS +=	\
 		swap_subr.o	\
 		swap_vnops.o	\
 		symlink.o	\
+		symtab.o	\
 		sync.o		\
 		sysclass.o	\
 		sysconfig.o	\

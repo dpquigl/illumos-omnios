@@ -76,9 +76,9 @@ bootflags(struct bootops *ops)
 
 #if defined(_OBP)
 	/* skip bootblk args */
-	params.gos_opts = "abcdDf:F:gGHhi:km:o:O:rsvVwxZ:";
+	params.gos_opts = "abcdDf:F:gGHhi:km:o:O:p:rsvVwxZ";
 #else
-	params.gos_opts = "abcdgGhi:km:O:rsvwx";
+	params.gos_opts = "abcdgGhi:km:O:p:rsvwx";
 #endif
 	params.gos_strp = cp;
 	getoptstr_init(&params);
@@ -170,6 +170,23 @@ bootflags(struct bootops *ops)
 			(void) strncpy(*str, params.gos_optargp,
 			    params.gos_optarglen);
 			(*str)[params.gos_optarglen] = '\0';
+			break;
+		}
+		case 'p': {
+			if (strlen(policyargs) + params.gos_optarglen + 1 >
+			    sizeof (policyargs)) {
+				_kobj_printf(ops,
+				    "unix: init options too long.  "
+				    "Ignoring -p.\n");
+				break;
+			}
+			/* gos_optargp is not null terminated */
+			(void) strncpy(scratch, params.gos_optargp,
+			    params.gos_optarglen);
+			scratch[params.gos_optarglen] = '\0';
+			(void) strlcat(policyargs, scratch,
+			    sizeof (policyargs));
+			(void) strlcat(policyargs, " ", sizeof (policyargs));
 			break;
 		}
 		case 'r':

@@ -364,6 +364,7 @@ tmp_mount(vfs_t *vfsp, vnode_t *mvp, struct mounta *uap, cred_t *cr)
 
 	rw_enter(&tp->tn_rwlock, RW_WRITER);
 	TNTOV(tp)->v_flag |= VROOT;
+	TNTOV(tp)->v_secid = mvp->v_secid;
 
 	/*
 	 * If the getattr succeeded, use its results.  Otherwise allow
@@ -400,8 +401,10 @@ tmp_mount(vfs_t *vfsp, vnode_t *mvp, struct mounta *uap, cred_t *cr)
 	error = 0;
 
 out:
-	if (error == 0)
+	if (error == 0) {
 		vfs_set_feature(vfsp, VFSFT_SYSATTR_VIEWS);
+		vfs_set_feature(vfsp, VFSFT_XVATTR);
+	}
 
 	return (error);
 }

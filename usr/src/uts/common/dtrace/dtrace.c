@@ -7763,7 +7763,7 @@ dtrace_cred2priv(cred_t *cr, uint32_t *privp, uid_t *uidp, zoneid_t *zoneidp)
 {
 	uint32_t priv;
 
-	if (cr == NULL || PRIV_POLICY_ONLY(cr, PRIV_ALL, B_FALSE)) {
+	if (cr == NULL || PRIV_POLICY_ONLY(cr, PRIV_DTRACE_ALL, B_FALSE)) {
 		/*
 		 * For DTRACE_PRIV_ALL, the uid and zoneid don't matter.
 		 */
@@ -11564,7 +11564,7 @@ dtrace_buffer_alloc(dtrace_buffer_t *bufs, size_t size, int flags,
 	*factor = 1;
 
 	if (size > dtrace_nonroot_maxsize &&
-	    !PRIV_POLICY_CHOICE(CRED(), PRIV_ALL, B_FALSE))
+	    !PRIV_POLICY_CHOICE(CRED(), PRIV_DTRACE_ALL, B_FALSE))
 		return (EFBIG);
 
 	cp = cpu_list;
@@ -13787,7 +13787,7 @@ dtrace_state_create(dev_t *devp, cred_t *cr)
 	 * actual anonymous tracing, or the possession of all privileges, all of
 	 * the normal checks are bypassed.
 	 */
-	if (cr == NULL || PRIV_POLICY_ONLY(cr, PRIV_ALL, B_FALSE)) {
+	if (cr == NULL || PRIV_POLICY_ONLY(cr, PRIV_DTRACE_ALL, B_FALSE)) {
 		state->dts_cred.dcr_visible = DTRACE_CRV_ALL;
 		state->dts_cred.dcr_action = DTRACE_CRA_ALL;
 	} else {

@@ -33,6 +33,8 @@
 #include <sys/thread.h>
 #include <sys/signal.h>
 #include <sys/brand.h>
+#include <sys/fmac/av_permissions.h>
+#include <sys/fmac/fmac.h>
 #include <sys/lx_brand.h>
 #include <lx_signum.h>
 #include <sys/contract/process_impl.h>
@@ -134,7 +136,7 @@ lx_thrkill(pid_t tgid, pid_t pid, int lx_sig, boolean_t tgkill)
 	 *	  to send the signal to the target pid
 	 */
 	if (((sig == SIGCONT) && (pp->p_sessp != cp->p_sessp)) ||
-	    (!prochasprocperm(pp, cp, CRED()))) {
+	    (!prochasprocperm(pp, cp, CRED(), fmac_sigtoav(sig)))) {
 		mutex_exit(&pp->p_lock);
 		rv = set_errno(EPERM);
 		goto free_and_exit;

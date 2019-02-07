@@ -37,6 +37,7 @@
 #include <sys/cpupart.h>
 #include <sys/lgrp.h>
 #include <sys/lgrp_user.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/promif.h>		/* for prom_printf() */
 #include <sys/sysmacros.h>
 #include <sys/policy.h>
@@ -361,7 +362,8 @@ lgrp_affinity_get_thread(proc_t *p, id_t lwpid, lgrp_id_t lgrp)
 			 * Check to see whether caller has permission to set
 			 * affinity for LWP
 			 */
-			if (t->t_cid == 0 || !hasprocperm(t->t_cred, CRED())) {
+			if (t->t_cid == 0 || !hasprocperm(t->t_cred, CRED(),
+				PROCESS__SETSCHED)) {
 				thread_unlock(t);
 				return (set_errno(EPERM));
 			}
@@ -603,7 +605,8 @@ lgrp_affinity_set_thread(kthread_t *t, lgrp_id_t lgrp, lgrp_affinity_t aff,
 	 * Check to see whether caller has permission to set affinity for
 	 * thread
 	 */
-	if (t->t_cid == 0 || !hasprocperm(t->t_cred, CRED())) {
+	if (t->t_cid == 0 || !hasprocperm(t->t_cred, CRED(),
+		PROCESS__SETSCHED)) {
 		thread_unlock(t);
 		return (set_errno(EPERM));
 	}
@@ -974,7 +977,8 @@ lgrp_home_thread(kthread_t *t)
 	 * Check to see whether caller has permission to set affinity for
 	 * thread
 	 */
-	if (t->t_cid == 0 || !hasprocperm(t->t_cred, CRED())) {
+	if (t->t_cid == 0 || !hasprocperm(t->t_cred, CRED(),
+		PROCESS__SETSCHED)) {
 		thread_unlock(t);
 		return (set_errno(EPERM));
 	}

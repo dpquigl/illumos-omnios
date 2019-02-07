@@ -498,6 +498,7 @@ extern "C" {
 #define	SYS_cladm		253
 #define	SYS_uucopy		254
 #define	SYS_umount2		255
+#define SYS_fmacsys		256
 
 #ifndef	_ASM
 

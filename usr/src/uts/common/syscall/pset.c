@@ -41,6 +41,7 @@
 #include <sys/pool.h>
 #include <sys/pool_pset.h>
 #include <sys/policy.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/zone.h>
 #include <sys/contract/process_impl.h>
 
@@ -270,7 +271,7 @@ pset_bind_thread(kthread_t *tp, psetid_t pset, psetid_t *oldpset, void *projbuf,
 		 * Must have the same UID as the target process or
 		 * have PRIV_PROC_OWNER privilege.
 		 */
-		if (!hasprocperm(tp->t_cred, CRED()))
+		if (!hasprocperm(tp->t_cred, CRED(), PROCESS__SETSCHED))
 			return (EPERM);
 		/*
 		 * Unbinding of an unbound thread should always succeed.

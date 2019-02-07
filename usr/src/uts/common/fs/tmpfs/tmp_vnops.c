@@ -70,6 +70,7 @@
 #include <sys/vm.h>
 #include <sys/vtrace.h>
 #include <sys/policy.h>
+#include <sys/fmac/fmac.h>
 #include <fs/fs_subr.h>
 
 static int	tmp_getapage(struct vnode *, u_offset_t, size_t, uint_t *,
@@ -716,7 +717,8 @@ tmp_getattr(
 	 */
 	vap->va_nblocks = (fsblkcnt64_t)btodb(ptob(btopr(vap->va_size)));
 	mutex_exit(&tp->tn_tlock);
-	return (0);
+
+	return (fmac_vnode_get_secctx(vp, vap));
 }
 
 /*ARGSUSED4*/
@@ -737,8 +739,31 @@ tmp_setattr(
 	/*
 	 * Cannot set these attributes
 	 */
-	if ((vap->va_mask & AT_NOSET) || (vap->va_mask & AT_XVATTR))
+	if (vap->va_mask & AT_NOSET)
 		return (EINVAL);
+
+	/*
+	 * Only support XAT_SECCTX presently.
+	 */
+	if (vap->va_mask & AT_XVATTR) {
+		if (XVA_ISSET_REQ(xvap, XAT_CREATETIME) ||
+		    XVA_ISSET_REQ(xvap, XAT_ARCHIVE) ||
+		    XVA_ISSET_REQ(xvap, XAT_SYSTEM) ||
+		    XVA_ISSET_REQ(xvap, XAT_READONLY) ||
+		    XVA_ISSET_REQ(xvap, XAT_HIDDEN) ||
+		    XVA_ISSET_REQ(xvap, XAT_NOUNLINK) ||
+		    XVA_ISSET_REQ(xvap, XAT_IMMUTABLE) ||
+		    XVA_ISSET_REQ(xvap, XAT_APPENDONLY) ||
+		    XVA_ISSET_REQ(xvap, XAT_NODUMP) ||
+		    XVA_ISSET_REQ(xvap, XAT_OPAQUE) ||
+		    XVA_ISSET_REQ(xvap, XAT_AV_MODIFIED) ||
+		    XVA_ISSET_REQ(xvap, XAT_AV_SCANSTAMP))
+			return (EINVAL);
+	}
+
+	error = fmac_vnode_setattr(vp, cred);
+	if (error)
+		return (error);
 
 	mutex_enter(&tp->tn_tlock);
 
@@ -754,6 +779,11 @@ tmp_setattr(
 		goto out;
 
 	mask = vap->va_mask;
+
+	if ((mask & AT_XVATTR) && XVA_ISSET_REQ(xvap, XAT_SECCTX)) {
+		/* vnode secid was updated during the secpolicy call. */
+		XVA_SET_RTN(xvap, XAT_SECCTX);
+	}
 
 	if (mask & AT_MODE) {
 		get->va_mode &= S_IFMT;
@@ -960,6 +990,7 @@ tmp_create(
 	struct tmpnode *self;
 	int error;
 	struct tmpnode *oldtp;
+	security_id_t	secid;
 
 again:
 	parent = (struct tmpnode *)VTOTN(dvp);
@@ -1047,6 +1078,10 @@ again:
 	if (error != ENOENT)
 		return (error);
 
+	error = fmac_vnode_create(dvp, nm, NULL, &vap, cred, &secid);
+	if (error)
+		return (error);
+
 	rw_enter(&parent->tn_rwlock, RW_WRITER);
 	error = tdirenter(tm, parent, nm, DE_CREATE,
 	    (struct tmpnode *)NULL, (struct tmpnode *)NULL,
@@ -1083,6 +1118,8 @@ again:
 			return (ENOSYS);
 		*vpp = newvp;
 	}
+
+	fmac_vnode_post_create(*vpp, secid);
 	TRACE_3(TR_FAC_TMPFS, TR_TMPFS_CREATE,
 	    "tmpfs create:dvp %p nm %s vpp %p", dvp, nm, vpp);
 	return (0);
@@ -1141,6 +1178,10 @@ tmp_link(
 
 	if (VOP_REALVP(srcvp, &realvp, ct) == 0)
 		srcvp = realvp;
+
+	error = fmac_vnode_link(dvp, srcvp, tnm, cred);
+	if (error)
+		return (error);
 
 	parent = (struct tmpnode *)VTOTN(dvp);
 	from = (struct tmpnode *)VTOTN(srcvp);
@@ -1337,6 +1378,11 @@ tmp_mkdir(
 	struct tmpnode *self = NULL;
 	struct tmount *tm = (struct tmount *)VTOTM(dvp);
 	int error;
+	security_id_t	secid;
+
+	error = fmac_vnode_create(dvp, nm, NULL, &va, cred, &secid);
+	if (error)
+		return (error);
 
 	/* no new dirs allowed in xattr dirs */
 	if (parent->tn_flags & ISXATTR)
@@ -1370,6 +1416,7 @@ tmp_mkdir(
 	}
 	rw_exit(&parent->tn_rwlock);
 	*vpp = TNTOV(self);
+	fmac_vnode_post_create(*vpp, secid);
 	return (0);
 }
 

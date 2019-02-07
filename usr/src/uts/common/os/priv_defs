@@ -31,6 +31,9 @@ INSERT COMMENT
 # add the new privilege at the end; for ordinary releases privileges
 # should be ordered alphabetically.
 #
+privilege PRIV_BOOTPART_MODIFY
+
+	Allows a process to modify a pcfs boot partition.
 
 privilege PRIV_CONTRACT_EVENT
 
@@ -71,6 +74,14 @@ privilege PRIV_DTRACE_USER
 	Allows DTrace user-level tracing.
 	Allows use of the syscall and profile DTrace providers to
 	examine processes to which the user has permissions.
+
+privilege PRIV_DTRACE_ALL
+
+	Allows DTrace tracing of all credentials.
+
+privilege PRIV_ERROR_INJECT
+
+	Allows error injection.
 
 privilege PRIV_FILE_CHOWN
 
@@ -114,6 +125,11 @@ privilege PRIV_FILE_DOWNGRADE_SL
 	existing sensitivity label.
 	This privilege is interpreted only if the system is configured
 	with Trusted Extensions.
+
+privilege PRIV_FILE_FLAG_CLR
+
+	Allows a process to clear immutable, nounlink or appendonly
+	file attributes.
 
 privilege PRIV_FILE_FLAG_SET
 
@@ -165,6 +181,10 @@ basic privilege PRIV_FILE_WRITE
 
 	Allows a process to modify objects in the filesystem.
 
+privilege PRIV_FIRMWARE_UPDATE
+
+	Allows a process to update firmware.
+
 privilege PRIV_GRAPHICS_ACCESS
 
 	Allows a process to make privileged ioctls to graphics devices.
@@ -203,6 +223,14 @@ privilege PRIV_IPC_OWNER
 	Message Queue, Semaphore Set, or Shared Memory Segment.
 	Additional restrictions apply if the owner of the object has uid 0
 	and the effective uid of the current process is not 0.
+
+privilege PRIV_KMDB
+
+	Allows access to /dev/kmdb.
+
+privilege PRIV_MODULE_LOAD
+
+	Allows a process to load a module or set device policy.
 
 basic privilege PRIV_NET_ACCESS
 
@@ -496,6 +524,14 @@ privilege PRIV_SYS_TRANS_LABEL
 	This privilege is interpreted only if the system is configured
 	with Trusted Extensions.
 
+privilege PRIV_TTY_INPUT
+
+	Allows a process to simulate terminal input.
+
+privilege PRIV_UCODE_UPDATE
+
+	Allows a process to update the microcode of the platform.
+
 privilege PRIV_VIRT_MANAGE
 
 	Allows a process to manage virtualized environments such as
@@ -608,6 +644,14 @@ privilege PRIV_XVM_CONTROL
 	Allows a process access to the xVM(5) control devices for
 	managing guest domains and the hypervisor. This privilege is
 	used only if booted into xVM on x86 platforms.
+
+privilege PRIV_ZFS_INJECT
+
+	Allows a process to inject faults in the ZFS fault injection framework.
+
+privilege PRIV_ZONE_CONFIG
+	
+	Allows a process to configure zones (create, halt, enter).
 
 set PRIV_EFFECTIVE
 

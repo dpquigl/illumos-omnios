@@ -41,6 +41,7 @@
 #include <sys/cmn_err.h>
 #include <sys/debug.h>
 #include <sys/policy.h>
+#include <sys/fmac/fmac.h>
 #include <sys/kobj.h>
 #include <sys/msg.h>
 #include <sys/devpolicy.h>
@@ -53,6 +54,7 @@
 #include <inet/optcom.h>
 #include <sys/sdt.h>
 #include <sys/vfs.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/mntent.h>
 #include <sys/contract_impl.h>
 #include <sys/dld_ioc.h>
@@ -384,7 +386,6 @@ priv_policy_err(const cred_t *cr, int priv, boolean_t allzone, const char *msg)
 		if (allzone && !HAS_ALLZONEPRIVS(cr)) {
 			priv_policy_errmsg(cr, PRIV_ALLZONE, msg);
 		} else {
-			ASSERT(!HAS_PRIVILEGE(cr, priv));
 			priv_policy_errmsg(cr, priv, msg);
 		}
 	}
@@ -399,9 +400,10 @@ static int
 priv_policy_ap(const cred_t *cr, int priv, boolean_t allzone, int err,
     const char *msg, va_list ap)
 {
-	if ((HAS_PRIVILEGE(cr, priv) && (!allzone || HAS_ALLZONEPRIVS(cr))) ||
+	if (((HAS_PRIVILEGE(cr, priv) && (!allzone || HAS_ALLZONEPRIVS(cr))) ||
 	    (!servicing_interrupt() &&
-	    priv_policy_override(cr, priv, allzone, ap) == 0)) {
+	    priv_policy_override(cr, priv, allzone, ap) == 0)) &&
+		fmac_priv_restrict(cr, priv) == 0) {
 		if ((allzone || priv == PRIV_ALL ||
 		    !PRIV_ISASSERT(priv_basic, priv)) &&
 		    !servicing_interrupt()) {
@@ -447,7 +449,8 @@ boolean_t
 priv_policy_choice(const cred_t *cr, int priv, boolean_t allzone)
 {
 	boolean_t res = HAS_PRIVILEGE(cr, priv) &&
-	    (!allzone || HAS_ALLZONEPRIVS(cr));
+	    (!allzone || HAS_ALLZONEPRIVS(cr)) &&
+		!fmac_priv_restrict(cr, priv);
 
 	/* Audit success only */
 	if (res && AU_AUDITING() &&
@@ -470,7 +473,8 @@ boolean_t
 priv_policy_only(const cred_t *cr, int priv, boolean_t allzone)
 {
 	boolean_t res = HAS_PRIVILEGE(cr, priv) &&
-	    (!allzone || HAS_ALLZONEPRIVS(cr));
+	    (!allzone || HAS_ALLZONEPRIVS(cr)) &&
+		!fmac_priv_restrict(cr, priv);
 
 	if (res) {
 		DTRACE_PROBE2(priv__ok, int, priv, boolean_t, allzone);
@@ -495,14 +499,14 @@ secpolicy_require_set(const cred_t *cr, const priv_set_t *req,
 
 	if (req == PRIV_FULLSET ? HAS_ALLPRIVS(cr) : priv_issubset(req,
 	    &CR_OEPRIV(cr))) {
-		return (0);
+		return (fmac_priv_require_set(cr, req));
 	}
 
 	va_start(ap, msg);
 	ret = priv_policy_override_set(cr, req, ap);
 	va_end(ap);
 	if (ret == 0)
-		return (0);
+		return (fmac_priv_require_set(cr, req));
 
 	if (req == PRIV_FULLSET || priv_isfullset(req)) {
 		priv_policy_err(cr, PRIV_ALL, B_FALSE, msg);
@@ -929,13 +933,15 @@ secpolicy_fs_linkdir(const cred_t *cr, const vfs_t *vfsp)
 int
 secpolicy_vnode_access(const cred_t *cr, vnode_t *vp, uid_t owner, mode_t mode)
 {
+	int err = 0;
+
 	if ((mode & VREAD) && priv_policy_va(cr, PRIV_FILE_DAC_READ, B_FALSE,
 	    EACCES, NULL, KLPDARG_VNODE, vp, (char *)NULL,
 	    KLPDARG_NOMORE) != 0) {
-		return (EACCES);
+		err = EACCES;
 	}
 
-	if (mode & VWRITE) {
+	if (!err && (mode & VWRITE)) {
 		boolean_t allzone;
 
 		if (owner == 0 && cr->cr_uid != 0)
@@ -945,21 +951,25 @@ secpolicy_vnode_access(const cred_t *cr, vnode_t *vp, uid_t owner, mode_t mode)
 		if (priv_policy_va(cr, PRIV_FILE_DAC_WRITE, allzone, EACCES,
 		    NULL, KLPDARG_VNODE, vp, (char *)NULL,
 		    KLPDARG_NOMORE) != 0) {
-			return (EACCES);
+			err = EACCES;
 		}
 	}
 
-	if (mode & VEXEC) {
+	if (!err && (mode & VEXEC)) {
 		/*
 		 * Directories use file_dac_search to override the execute bit.
 		 */
 		int p = vp->v_type == VDIR ? PRIV_FILE_DAC_SEARCH :
 		    PRIV_FILE_DAC_EXECUTE;
 
-		return (priv_policy_va(cr, p, B_FALSE, EACCES, NULL,
-		    KLPDARG_VNODE, vp, (char *)NULL, KLPDARG_NOMORE));
+		err =  priv_policy_va(cr, p, B_FALSE, EACCES, NULL,
+		    KLPDARG_VNODE, vp, (char *)NULL, KLPDARG_NOMORE);
 	}
-	return (0);
+
+	if (err)
+		return (fmac_vnode_priv_access(cr, vp, mode, err));
+	else
+		return (0);
 }
 
 /*
@@ -971,34 +981,35 @@ secpolicy_vnode_access2(const cred_t *cr, vnode_t *vp, uid_t owner,
     mode_t curmode, mode_t wantmode)
 {
 	mode_t mode;
+	int err = 0;
 
 	/* Inline the basic privileges tests. */
 	if ((wantmode & VREAD) &&
 	    !PRIV_ISASSERT(&CR_OEPRIV(cr), PRIV_FILE_READ) &&
 	    priv_policy_va(cr, PRIV_FILE_READ, B_FALSE, EACCES, NULL,
 	    KLPDARG_VNODE, vp, (char *)NULL, KLPDARG_NOMORE) != 0) {
-		return (EACCES);
+		err = EACCES;
 	}
 
-	if ((wantmode & VWRITE) &&
+	if (!err *&& (wantmode & VWRITE) &&
 	    !PRIV_ISASSERT(&CR_OEPRIV(cr), PRIV_FILE_WRITE) &&
 	    priv_policy_va(cr, PRIV_FILE_WRITE, B_FALSE, EACCES, NULL,
 	    KLPDARG_VNODE, vp, (char *)NULL, KLPDARG_NOMORE) != 0) {
-		return (EACCES);
+		err = EACCES;
 	}
 
 	mode = ~curmode & wantmode;
 
-	if (mode == 0)
+	if (!err &&(mode == 0))
 		return (0);
 
-	if ((mode & VREAD) && priv_policy_va(cr, PRIV_FILE_DAC_READ, B_FALSE,
+	if (!err && (mode & VREAD) && priv_policy_va(cr, PRIV_FILE_DAC_READ, B_FALSE,
 	    EACCES, NULL, KLPDARG_VNODE, vp, (char *)NULL,
 	    KLPDARG_NOMORE) != 0) {
-		return (EACCES);
+		err = EACCES;
 	}
 
-	if (mode & VWRITE) {
+	if (!err && (mode & VWRITE)) {
 		boolean_t allzone;
 
 		if (owner == 0 && cr->cr_uid != 0)
@@ -1008,21 +1019,24 @@ secpolicy_vnode_access2(const cred_t *cr, vnode_t *vp, uid_t owner,
 		if (priv_policy_va(cr, PRIV_FILE_DAC_WRITE, allzone, EACCES,
 		    NULL, KLPDARG_VNODE, vp, (char *)NULL,
 		    KLPDARG_NOMORE) != 0) {
-			return (EACCES);
+			err =EACCES;
 		}
 	}
 
-	if (mode & VEXEC) {
+	if (!err && (mode & VEXEC)) {
 		/*
 		 * Directories use file_dac_search to override the execute bit.
 		 */
 		int p = vp->v_type == VDIR ? PRIV_FILE_DAC_SEARCH :
 		    PRIV_FILE_DAC_EXECUTE;
 
-		return (priv_policy_va(cr, p, B_FALSE, EACCES, NULL,
-		    KLPDARG_VNODE, vp, (char *)NULL, KLPDARG_NOMORE));
+		err =  priv_policy_va(cr, p, B_FALSE, EACCES, NULL,
+		    KLPDARG_VNODE, vp, (char *)NULL, KLPDARG_NOMORE);
 	}
-	return (0);
+	if (err)
+		return (fmac_vnoce_priv_access(cr, vp, mode, err));
+	else
+		return (0);
 }
 
 /*
@@ -1303,16 +1317,20 @@ secpolicy_setid_setsticky_clear(vnode_t *vp, vattr_t *vap, const vattr_t *ovap,
 	return (0);
 }
 
-#define	ATTR_FLAG_PRIV(attr, value, cr)	\
-	PRIV_POLICY(cr, value ? PRIV_FILE_FLAG_SET : PRIV_ALL, \
-	B_FALSE, EPERM, NULL)
+#define	PRIV_FLAG_SET_OR_CLR(value) \
+	((value) ? PRIV_FILE_FLAG_SET : PRIV_FILE_FLAG_CLR)
+
+#define	ATTR_FLAG_PRIV(attr, value, cr, vp)	\
+	fmac_xvattr(cr, vp, PRIV_FLAG_SET_OR_CLR(value), \
+    PRIV_POLICY(cr, PRIV_FLAG_SET_OR_CLR(value), \
+	B_FALSE, EPERM, NULL))
 
 /*
  * Check privileges for setting xvattr attributes
  */
 int
-secpolicy_xvattr(xvattr_t *xvap, uid_t owner, cred_t *cr, vtype_t vtype)
-{
+secpolicy_xvattr(xvattr_t *xvap, uid_t owner, cred_t *cr, vtype_t vtype,
+    vnode_t *vp /* NULL on create */){
 	xoptattr_t *xoap;
 	int error = 0;
 
@@ -1339,32 +1357,38 @@ secpolicy_xvattr(xvattr_t *xvap, uid_t owner, cred_t *cr, vtype_t vtype)
 
 	if (XVA_ISSET_REQ(xvap, XAT_IMMUTABLE))
 		error = ATTR_FLAG_PRIV(XAT_IMMUTABLE,
-		    xoap->xoa_immutable, cr);
+		    xoap->xoa_immutable, cr, vp);
 	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_NOUNLINK))
 		error = ATTR_FLAG_PRIV(XAT_NOUNLINK,
-		    xoap->xoa_nounlink, cr);
+		    xoap->xoa_nounlink, cr, vp);
 	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_APPENDONLY))
 		error = ATTR_FLAG_PRIV(XAT_APPENDONLY,
-		    xoap->xoa_appendonly, cr);
+		    xoap->xoa_appendonly, cr, vp);
 	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_NODUMP))
 		error = ATTR_FLAG_PRIV(XAT_NODUMP,
-		    xoap->xoa_nodump, cr);
+		    xoap->xoa_nodump, cr, vp);
 	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_OPAQUE))
 		error = EPERM;
 	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_AV_QUARANTINED)) {
 		error = ATTR_FLAG_PRIV(XAT_AV_QUARANTINED,
-		    xoap->xoa_av_quarantined, cr);
+		    xoap->xoa_av_quarantined, cr, vp);
 		if (error == 0 && vtype != VREG && xoap->xoa_av_quarantined)
 			error = EINVAL;
 	}
 	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_AV_MODIFIED))
 		error = ATTR_FLAG_PRIV(XAT_AV_MODIFIED,
-		    xoap->xoa_av_modified, cr);
+		    xoap->xoa_av_modified, cr, vp);
 	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_AV_SCANSTAMP)) {
 		error = ATTR_FLAG_PRIV(XAT_AV_SCANSTAMP,
-		    xoap->xoa_av_scanstamp, cr);
+		    xoap->xoa_av_scanstamp, cr, vp);
 		if (error == 0 && vtype != VREG)
 			error = EINVAL;
+	}
+	if (error == 0 && XVA_ISSET_REQ(xvap, XAT_SECCTX)) {
+		error = secpolicy_vnode_owner(cr, owner);
+		if (!error)
+			error = fmac_vnode_set_secctx(xoap->xoa_secctx, cr,
+			    vtype, vp);
 	}
 	return (error);
 }
@@ -1514,7 +1538,7 @@ secpolicy_vnode_setattr(cred_t *cr, struct vnode *vp, struct vattr *vap,
 	 */
 	if (mask & AT_XVATTR)
 		error = secpolicy_xvattr((xvattr_t *)vap, ovap->va_uid, cr,
-		    vp->v_type);
+		    vp->v_type, vp);
 out:
 	return (error);
 }
@@ -1530,7 +1554,7 @@ out:
 int
 secpolicy_pcfs_modify_bootpartition(const cred_t *cred)
 {
-	return (PRIV_POLICY(cred, PRIV_ALL, B_FALSE, EACCES,
+	return (PRIV_POLICY(cred, PRIV_BOOTPART_MODIFY, B_FALSE, EACCES,
 	    "modify pcfs boot partition"));
 }
 
@@ -1728,13 +1752,13 @@ secpolicy_proc_zone(const cred_t *scr)
 int
 secpolicy_kmdb(const cred_t *scr)
 {
-	return (PRIV_POLICY(scr, PRIV_ALL, B_FALSE, EPERM, NULL));
+	return (PRIV_POLICY(scr, PRIV_KMDB, B_FALSE, EPERM, NULL));
 }
 
 int
 secpolicy_error_inject(const cred_t *scr)
 {
-	return (PRIV_POLICY(scr, PRIV_ALL, B_FALSE, EPERM, NULL));
+	return (PRIV_POLICY(scr, PRIV_ERROR_INJECT, B_FALSE, EPERM, NULL));
 }
 
 /*
@@ -1823,11 +1847,7 @@ secpolicy_zone_admin(const cred_t *cr, boolean_t checkonly)
 int
 secpolicy_zone_config(const cred_t *cr)
 {
-	/*
-	 * Require all privileges to avoid possibility of privilege
-	 * escalation.
-	 */
-	return (secpolicy_require_set(cr, PRIV_FULLSET, NULL, KLPDARG_NONE));
+	return (PRIV_POLICY(cr, PRIV_ZONE_CONFIG, B_FALSE, EPERM, NULL));
 }
 
 /*
@@ -2153,7 +2173,8 @@ int
 secpolicy_basic_procinfo(const cred_t *cr, proc_t *tp, proc_t *sp)
 {
 	if (tp == sp ||
-	    !HAS_PRIVILEGE(cr, PRIV_PROC_INFO) && prochasprocperm(tp, sp, cr)) {
+	    !HAS_PRIVILEGE(cr, PRIV_PROC_INFO) &&
+		prochasprocperm(tp, sp, cr, PROCESS__INFO)) {
 		return (0);
 	} else {
 		return (PRIV_POLICY(cr, PRIV_PROC_INFO, B_FALSE, EPERM, NULL));
@@ -2287,8 +2308,8 @@ secpolicy_modctl(const cred_t *cr, int cmd)
 		return (0);
 	case MODLOAD:
 	case MODSETDEVPOLICY:
-		return (secpolicy_require_set(cr, PRIV_FULLSET, NULL,
-		    KLPDARG_NONE));
+		return (PRIV_POLICY(cr, PRIV_MODULE_LOAD, B_FALSE, EPERM,
+		    NULL));
 	default:
 		return (secpolicy_sys_config(cr, B_FALSE));
 	}
@@ -2313,7 +2334,7 @@ secpolicy_power_mgmt(const cred_t *cr)
 int
 secpolicy_sti(const cred_t *cr)
 {
-	return (secpolicy_require_set(cr, PRIV_FULLSET, NULL, KLPDARG_NONE));
+	return (PRIV_POLICY(cr, PRIV_TTY_INPUT, B_FALSE, EPERM, NULL));
 }
 
 boolean_t
@@ -2446,7 +2467,7 @@ secpolicy_xhci(const cred_t *cr)
 int
 secpolicy_zinject(const cred_t *cr)
 {
-	return (secpolicy_require_set(cr, PRIV_FULLSET, NULL, KLPDARG_NONE));
+	return (PRIV_POLICY(cr, PRIV_ZFS_INJECT, B_FALSE, EPERM, NULL));
 }
 
 /*
@@ -2481,7 +2502,7 @@ secpolicy_idmap(const cred_t *cr)
 int
 secpolicy_ucode_update(const cred_t *scr)
 {
-	return (PRIV_POLICY(scr, PRIV_ALL, B_FALSE, EPERM, NULL));
+	return (PRIV_POLICY(scr, PRIV_UCODE_UPDATE, B_FALSE, EPERM, NULL));
 }
 
 /*

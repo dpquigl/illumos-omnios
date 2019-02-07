@@ -430,6 +430,11 @@ extern char initargs[BOOTARGS_MAX];
 extern int exec_init(const char *, const char *);
 extern int start_init_common(void);
 
+/*
+ * policyargs contains security policy related boot arguments.
+ */
+extern char policyargs[BOOTARGS_MAX];
+
 #endif	/* _KERNEL */
 
 #if defined(_KERNEL) || defined(_FAKE_KERNEL) || defined(_BOOT)

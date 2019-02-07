@@ -33,6 +33,7 @@
 #include <sys/corectl.h>
 #include <sys/zone.h>
 #include <sys/cmn_err.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/policy.h>
 
 /*
@@ -283,7 +284,8 @@ corectl(int subcode, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3)
 				mutex_enter(&p->p_lock);
 				mutex_exit(&pidlock);
 				mutex_enter(&p->p_crlock);
-				if (!hasprocperm(p->p_cred, CRED()))
+				if (!hasprocperm(p->p_cred, CRED(),
+					PROCESS__GETCORE))
 					error = EPERM;
 				else if (p->p_corefile != NULL)
 					rp = corectl_path_value(p->p_corefile);
@@ -394,7 +396,7 @@ corectl(int subcode, uintptr_t arg1, uintptr_t arg2, uintptr_t arg3)
 		mutex_enter(&p->p_lock);
 		mutex_exit(&pidlock);
 		mutex_enter(&p->p_crlock);
-		if (!hasprocperm(p->p_cred, CRED()))
+		if (!hasprocperm(p->p_cred, CRED(), PROCESS__GETCORE))
 			error = EPERM;
 		else if (p->p_content == NULL)
 			content = CC_CONTENT_NONE;
@@ -432,7 +434,8 @@ set_one_proc_info(proc_t *p, counter_t *counterp)
 
 	mutex_enter(&p->p_crlock);
 
-	if (!(p->p_flag & SSYS) && hasprocperm(p->p_cred, CRED())) {
+	if (!(p->p_flag & SSYS) && hasprocperm(p->p_cred, CRED(),
+		PROCESS__SETCORE)) {
 		mutex_exit(&p->p_crlock);
 		counterp->cc_count++;
 		if (counterp->cc_path != NULL) {

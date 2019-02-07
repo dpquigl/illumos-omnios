@@ -38,6 +38,7 @@
 #include <sys/sysmacros.h>
 #include <sys/pathname.h>
 #include <sys/varargs.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/zone.h>
 #include <sys/cmn_err.h>
 #include <sys/sdt.h>
@@ -548,7 +549,8 @@ klpd_reg(int did, idtype_t type, id_t id, priv_set_t *psetbuf)
 		cred_t *pcr;
 		mutex_enter(&pidlock);
 		p = prfind(pid);
-		if (p == NULL || !prochasprocperm(p, curproc, CRED())) {
+		if (p == NULL || !prochasprocperm(p, curproc, CRED(),
+			PROCESS__PTRACE)) {
 			mutex_exit(&pidlock);
 			klpd_rele(kpd);
 			return (set_errno(p == NULL ? ESRCH : EPERM));

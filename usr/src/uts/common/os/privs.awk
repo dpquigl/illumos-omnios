@@ -212,7 +212,7 @@ BEGIN	{
 
 END	{
 
-	if (!pubhfile && !privhfile && !cfile && !pnamesfile) {
+	if (!pubhfile && !privhfile && !cfile && !pnamesfile && !fmacfile) {
 		print "Output file parameter not set" > "/dev/stderr"
 		exit 1
 	}
@@ -402,5 +402,13 @@ END	{
 			print privncmt[i] > pnamesfile
 		}
 	}
-
+	if (fmacfile) {
+		for (i = 0; i < npriv / 32; i++) {
+			print "\nclass priv" i "\n{\n" > fmacfile
+			for (j = i * 32; j < npriv && j < (i+1)*32; j++) {
+				print "\t" privs[j] > fmacfile
+			}
+			print "}\n" > fmacfile
+		}
+	}
 }

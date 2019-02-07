@@ -57,6 +57,7 @@ extern "C" {
 #define	A_GEN			"generation"
 #define	A_OFFLINE		"offline"
 #define	A_SPARSE		"sparse"
+#define	A_SECCTX		"secctx"
 
 /* Attribute option for utilities */
 #define	O_HIDDEN	 "H"
@@ -100,6 +101,7 @@ typedef enum {
 	F_GEN,
 	F_OFFLINE,
 	F_SPARSE,
+	F_SECCTX,
 	F_ATTR_ALL
 } f_attr_t;
 

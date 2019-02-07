@@ -58,6 +58,8 @@
 #include <sys/schedctl.h>
 #include <sys/contract/process_impl.h>
 #include <sys/cyclic.h>
+#include <sys/fmac/av_permissions.h>
+#include <sys/fmac/fmac.h>
 #include <sys/dtrace.h>
 #include <sys/sdt.h>
 #include <sys/signalfd.h>
@@ -1919,7 +1921,7 @@ sigsendproc(proc_t *p, sigsend_t *pv)
 
 	if (pv->checkperm == 0 ||
 	    (pv->sig == SIGCONT && p->p_sessp == myprocp->p_sessp) ||
-	    prochasprocperm(p, myprocp, cr)) {
+	    prochasprocperm(p, myprocp, cr, fmac_sigtoav(pv->sig))) {
 		pv->perm++;
 		if (pv->sig) {
 			/* Make sure we should be setting si_pid and friends */

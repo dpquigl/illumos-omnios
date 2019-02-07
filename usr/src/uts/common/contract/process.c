@@ -42,6 +42,7 @@
 #include <sys/cmn_err.h>
 #include <sys/nvpair.h>
 #include <sys/policy.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/refstr.h>
 #include <sys/sunddi.h>
 
@@ -490,9 +491,10 @@ contract_process_cankill(proc_t *tp, proc_t *sp, cont_process_t *ctp)
 	int cankill;
 
 	mutex_enter(&tp->p_crlock);
-	cankill = hasprocperm(tp->p_cred, ctp->conp_cred);
+	cankill = hasprocperm(tp->p_cred, ctp->conp_cred, PROCESS__SIGKILL);
 	mutex_exit(&tp->p_crlock);
-	if (cankill || (sp && prochasprocperm(tp, sp, CRED())))
+	if (cankill || (sp && prochasprocperm(tp, sp, CRED(),
+		PROCESS__SIGKILL)))
 		return (1);
 
 	return (0);

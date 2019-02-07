@@ -148,6 +148,10 @@ typedef struct {
 #define	kobj_newline(p)	 ((p)->_ln++)
 #define	kobj_getc(p)	(--(p)->_cnt >= 0 ? ((int)*(p)->_ptr++):kobj_filbuf(p))
 #define	kobj_ungetc(p)	 (++(p)->_cnt > (p)->_size ? -1 : ((int)*(--(p)->_ptr)))
+#define	kobj_getc(p)	(--(p)->_cnt >= 0 ?		\
+			((int)((unsigned char)*(p)->_ptr++)):kobj_filbuf(p))
+#define	kobj_ungetc(p)	 (++(p)->_cnt > (p)->_size ?	\
+			-1 : ((int)((unsigned char)*(--(p)->_ptr))))
 #define	kobj_comphdr(p)	((struct comphdr *)(p)->_dbuf)
 
 /* Offset into buffer */

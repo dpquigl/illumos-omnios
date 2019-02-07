@@ -35,6 +35,7 @@
 #include <sys/vtoc.h>
 #include <sys/dkio.h>
 #include <sys/policy.h>
+#include <sys/priv_const.h>
 #include <sys/priv.h>
 
 #include <sys/dktp/dadev.h>
@@ -809,10 +810,10 @@ dadk_ioctl(opaque_t objp, dev_t dev, int cmd, intptr_t arg, int flag,
 	case DKIOC_UPDATEFW:
 
 		/*
-		 * Require PRIV_ALL privilege to invoke DKIOC_UPDATEFW
-		 * to protect the firmware update from malicious use
+		 * Protect the firmware update from malicious use
 		 */
-		if (PRIV_POLICY(cred_p, PRIV_ALL, B_FALSE, EPERM, NULL) != 0)
+		if (PRIV_POLICY(cred_p, PRIV_FIRMWARE_UPDATE, B_FALSE,
+			EPERM, NULL) != 0)
 			return (EPERM);
 		else
 			return (dadk_ctl_ioctl(dadkp, cmd, arg, flag));

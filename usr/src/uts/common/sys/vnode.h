@@ -53,6 +53,7 @@
 #include <sys/kstat.h>
 #include <sys/kmem.h>
 #include <sys/list.h>
+#include <sys/fmac/flask_types.h>
 #ifdef	_KERNEL
 #include <sys/buf.h>
 #include <sys/sdt.h>
@@ -199,6 +200,7 @@ struct vsd_node {
  *   v_path
  *   v_vsd
  *   v_xattrdir
+ *   v_secid
  *
  * A special lock (implemented by vn_vfswlock in vnode.c) protects:
  *   v_vfsmountedhere
@@ -290,6 +292,7 @@ typedef struct vnode {
 	struct stdata	*v_stream;	/* associated stream */
 	enum vtype	v_type;		/* vnode type */
 	dev_t		v_rdev;		/* device (VCHR, VBLK) */
+	security_id_t	v_secid;	/* FMAC security identifier */
 
 	/* PRIVATE FIELDS BELOW - DO NOT USE */
 
@@ -447,6 +450,8 @@ typedef struct vattr {
 } vattr_t;
 
 #define	AV_SCANSTAMP_SZ	32		/* length of anti-virus scanstamp */
+#define	SECCTX_SZ	56		/* length of secctx */
+/* XXX:  This should be variable sized and support large sizes. TBD. */
 
 /*
  * Structure of all optional attributes.
@@ -469,6 +474,7 @@ typedef struct xoptattr {
 	uint64_t	xoa_generation;
 	uint8_t		xoa_offline;
 	uint8_t		xoa_sparse;
+	char		xoa_secctx[SECCTX_SZ];
 } xoptattr_t;
 
 /*
@@ -651,11 +657,13 @@ typedef vattr_t		vattr32_t;
 #define	XAT0_GEN	0x00004000	/* object generation number */
 #define	XAT0_OFFLINE	0x00008000	/* offline */
 #define	XAT0_SPARSE	0x00010000	/* sparse */
+#define	XAT0_SECCTX	0x00020000	/* security context */
 
 #define	XAT0_ALL_ATTRS	(XAT0_CREATETIME|XAT0_ARCHIVE|XAT0_SYSTEM| \
     XAT0_READONLY|XAT0_HIDDEN|XAT0_NOUNLINK|XAT0_IMMUTABLE|XAT0_APPENDONLY| \
     XAT0_NODUMP|XAT0_OPAQUE|XAT0_AV_QUARANTINED|  XAT0_AV_MODIFIED| \
-    XAT0_AV_SCANSTAMP|XAT0_REPARSE|XATO_GEN|XAT0_OFFLINE|XAT0_SPARSE)
+    XAT0_AV_SCANSTAMP|XAT0_REPARSE|XATO_GEN|XAT0_OFFLINE|XAT0_SPARSE| \
+    XAT0_SECCTX)
 
 /* Support for XAT_* optional attributes */
 #define	XVA_MASK		0xffffffff	/* Used to mask off 32 bits */
@@ -692,6 +700,7 @@ typedef vattr_t		vattr32_t;
 #define	XAT_GEN			((XAT0_INDEX << XVA_SHFT) | XAT0_GEN)
 #define	XAT_OFFLINE		((XAT0_INDEX << XVA_SHFT) | XAT0_OFFLINE)
 #define	XAT_SPARSE		((XAT0_INDEX << XVA_SHFT) | XAT0_SPARSE)
+#define	XAT_SECCTX		((XAT0_INDEX << XVA_SHFT) | XAT0_SECCTX)
 
 /*
  * The returned attribute map array (xva_rtnattrmap[]) is located past the
@@ -1398,6 +1407,7 @@ void vsd_free(vnode_t *);
  * xva_getxoptattr() returns a ponter to the xoptattr_t section of xvattr_t
  */
 void		xva_init(xvattr_t *);
+void		xva_from_va(xvattr_t *, vattr_t *);
 xoptattr_t	*xva_getxoptattr(xvattr_t *);	/* Get ptr to xoptattr_t */
 
 void xattr_init(void);		/* Initialize vnodeops for xattrs */

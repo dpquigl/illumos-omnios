@@ -55,6 +55,7 @@
 #include <sys/bitmap.h>
 #include <sys/nvpair.h>
 #include <sys/pool_pset.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/msacct.h>
 #include <sys/time.h>
 #include <sys/archsystm.h>
@@ -2612,7 +2613,8 @@ cpu_bind_thread(kthread_id_t tp, processorid_t bind, processorid_t *obind,
 	 * Binding will get EPERM if the thread is of system class
 	 * or hasprocperm() fails.
 	 */
-	if (tp->t_cid == 0 || !hasprocperm(tp->t_cred, CRED())) {
+	if (tp->t_cid == 0 || !hasprocperm(tp->t_cred, CRED(),
+		PROCESS__SETSCHED)) {
 		*error = EPERM;
 		thread_unlock(tp);
 		return (0);

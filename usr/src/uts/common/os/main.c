@@ -81,6 +81,9 @@
 
 #include <c2/audit.h>
 #include <sys/bootprops.h>
+#include <sys/fmac/fmac.h>
+#include <sys/fmac/security.h>
+#include <sys/fmac/avc.h>
 
 /* well known processes */
 proc_t *proc_sched;		/* memory scheduler */
@@ -93,6 +96,8 @@ pgcnt_t	freemem;	/* Current available memory in pages.	*/
 int	interrupts_unleashed;	/* set when we do the first spl0() */
 
 kmem_cache_t *process_cache;	/* kmem cache for proc structures */
+
+char policyargs[BOOTARGS_MAX] = "";
 
 /*
  * Indicates whether the auditing module (c2audit) is loaded. Possible
@@ -476,6 +481,11 @@ main(void)
 	 * before release_bootstrap() frees boot memory
 	 */
 	lgrp_init(LGRP_INIT_STAGE3);
+ 
+ 	/*
+	 * Initialize the Access Vector Cache
+	 */
+	avc_init();
 
 	/*
 	 * Call all system initialization functions.
@@ -626,6 +636,11 @@ main(void)
 #if defined(__x86)
 	fastboot_post_startup();
 #endif
+
+ 	/*
+	 * Load and initialize seurity policy
+	 */
+	fmac_init();
 
 	/*
 	 * Make init process; enter scheduling loop with system process.

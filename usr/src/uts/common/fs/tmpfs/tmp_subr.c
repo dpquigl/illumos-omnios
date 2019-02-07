@@ -39,6 +39,7 @@
 #include <sys/kmem.h>
 #include <sys/atomic.h>
 #include <sys/policy.h>
+#include <sys/fmac/fmac.h>
 #include <sys/fs/tmp.h>
 #include <sys/fs/tmpnode.h>
 #include <sys/ddi.h>
@@ -59,6 +60,8 @@ tmp_taccess(void *vtp, int mode, struct cred *cred)
 {
 	struct tmpnode *tp = vtp;
 	int shift = 0;
+	int error = 0;
+
 	/*
 	 * Check access based on owner, group and
 	 * public permissions in tmpnode.
@@ -69,8 +72,13 @@ tmp_taccess(void *vtp, int mode, struct cred *cred)
 			shift += MODESHIFT;
 	}
 
-	return (secpolicy_vnode_access2(cred, TNTOV(tp), tp->tn_uid,
-	    tp->tn_mode << shift, mode));
+	error = secpolicy_vnode_access2(cred, TNTOV(tp), tp->tn_uid,
+	    tp->tn_mode << shift, mode);
+	
+	if (!error)
+		error = fmac_vnode_access(TNTOV(tp), mode, 0, cred, B_TRUE);
+
+	return (error);
 }
 
 /*
@@ -87,15 +95,18 @@ tmp_sticky_remove_access(struct tmpnode *dir, struct tmpnode *entry,
     struct cred *cr)
 {
 	uid_t uid = crgetuid(cr);
+	int error = 0;
 
 	if ((dir->tn_mode & S_ISVTX) &&
 	    uid != dir->tn_uid &&
 	    uid != entry->tn_uid &&
 	    (entry->tn_type != VREG ||
 	    tmp_taccess(entry, VWRITE, cr) != 0))
-		return (secpolicy_vnode_remove(cr));
+		error = secpolicy_vnode_remove(cr);
+	if (!error)
+		error = fmac_vnode_remove(TNTOV(dir), TNTOV(entry), NULL, cr);
 
-	return (0);
+	return (error);
 }
 
 /*

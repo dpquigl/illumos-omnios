@@ -61,6 +61,8 @@
 #include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/debug.h>
+#include <sys/fmac/flask.h>
+#include <sys/fmac/fmac.h>
 #include <c2/audit.h>
 #include <sys/acl.h>
 #include <sys/nbmlock.h>
@@ -398,6 +400,18 @@ xva_init(xvattr_t *xvap)
 	xvap->xva_magic = XVA_MAGIC;
 	xvap->xva_vattr.va_mask = AT_XVATTR;
 	xvap->xva_rtnattrmapp = &(xvap->xva_rtnattrmap)[0];
+}
+
+/*
+ * Populate an xvattr from a vattr.
+ */
+void
+xva_from_va(xvattr_t *xvap, vattr_t *vap)
+{
+	ASSERT(!(vap->va_mask & AT_XVATTR));
+	xva_init(xvap);
+	(void) memcpy(&xvap->xva_vattr, vap, sizeof (vattr_t));
+	xvap->xva_vattr.va_mask |= AT_XVATTR;
 }
 
 /*
@@ -2407,6 +2421,7 @@ vn_reinit(vnode_t *vp)
 	vp->v_flag = 0;
 	vp->v_type = VNON;
 	vp->v_rdev = NODEV;
+	vp->v_secid = SECINITSID_UNLABELED;
 
 	vp->v_filocks = NULL;
 	vp->v_shrlocks = NULL;
@@ -3711,6 +3726,7 @@ fop_lookup(
 		    (dvp, nm, vpp, pnp, flags, rdir, cr, ct, deflags, ppnp);
 	}
 	if (ret == 0 && *vpp) {
+		(void) fmac_vnode_lookup(*vpp, cr, ct);
 		VOPSTATS_UPDATE(*vpp, lookup);
 		vn_updatepath(dvp, *vpp, nm);
 	}

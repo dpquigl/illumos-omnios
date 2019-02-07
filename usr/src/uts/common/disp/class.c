@@ -32,6 +32,7 @@
 #include <sys/class.h>
 #include <sys/kmem.h>
 #include <sys/cred.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/proc.h>
 #include <sys/procset.h>
 #include <sys/modctl.h>
@@ -265,7 +266,8 @@ parmsset(pcparms_t *parmsp, kthread_t *targtp)
 		/*
 		 * Check basic permissions.
 		 */
-		if (!prochasprocperm(targpp, reqpp, reqpcredp)) {
+		if (!prochasprocperm(targpp, reqpp, reqpcredp,
+			PROCESS__SETSCHED)) {
 			crfree(reqpcredp);
 			return (EPERM);
 		}

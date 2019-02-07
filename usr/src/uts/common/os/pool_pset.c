@@ -39,6 +39,7 @@
 #include <sys/exacct.h>
 #include <sys/time.h>
 #include <sys/policy.h>
+#include <sys/fmac/av_permissions.h>
 #include <sys/class.h>
 #include <sys/list.h>
 #include <sys/cred.h>
@@ -645,7 +646,7 @@ pset_bind_start(proc_t **procs, pool_t *pool)
 		/*
 		 * Check our basic permissions to control this process.
 		 */
-		if (!prochasprocperm(p, curproc, pcred)) {
+		if (!prochasprocperm(p, curproc, pcred, PROCESS__SETSCHED)) {
 			mutex_exit(&p->p_lock);
 			weakbinding_start();
 			mutex_exit(&cpu_lock);

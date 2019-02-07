@@ -50,6 +50,7 @@
 #include <sys/vfs.h>
 #include <sys/vm.h>
 #include <sys/file.h>
+#include <sys/fmac/fmac.h>
 #include <sys/mman.h>
 #include <sys/vmparam.h>
 #include <sys/fcntl.h>
@@ -769,6 +770,24 @@ smmap_common(caddr_t *addrp, size_t len,
 	/* Can't execute code from "noexec" mounted filesystem. */
 	if ((vp->v_vfsp->vfs_flag & VFS_NOEXEC) != 0)
 		maxprot &= ~PROT_EXEC;
+
+	if (prot & PROT_EXEC) {
+		/*
+		 * Caller requested PROT_EXEC; fail immediately if
+		 * it isn't allowed.
+		 */
+		error = fmac_vnode_access(vp, VEXEC, 0, CRED(), B_TRUE);
+		if (error)
+			return (error);
+	} else {
+		/*
+		 * Caller did not request PROT_EXEC; limit maxprot based
+		 * on whether it is allowed so that mprotect cannot exceed
+		 * the allowed permissions.
+		 */
+		if (fmac_vnode_access(vp, VEXEC, 0, CRED(), B_FALSE))
+			maxprot &= ~PROT_EXEC;
+	}
 
 	/*
 	 * These checks were added as part of large files.

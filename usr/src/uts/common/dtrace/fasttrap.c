@@ -46,6 +46,7 @@
 #include <sys/dtrace_impl.h>
 #include <sys/sysmacros.h>
 #include <sys/proc.h>
+#include <sys/priv_const.h>
 #include <sys/priv.h>
 #include <sys/policy.h>
 #include <util/qsort.h>
@@ -1984,7 +1985,7 @@ fasttrap_ioctl(dev_t dev, int cmd, intptr_t arg, int md, cred_t *cr, int *rv)
 			goto err;
 		}
 
-		if (!PRIV_POLICY_CHOICE(cr, PRIV_ALL, B_FALSE)) {
+		if (!PRIV_POLICY_CHOICE(cr, PRIV_DTRCE_ALL, B_FALSE)) {
 			proc_t *p;
 			pid_t pid = probe->ftps_pid;
 
@@ -2024,7 +2025,7 @@ err:
 		if (copyin((void *)arg, &instr, sizeof (instr)) != 0)
 			return (EFAULT);
 
-		if (!PRIV_POLICY_CHOICE(cr, PRIV_ALL, B_FALSE)) {
+		if (!PRIV_POLICY_CHOICE(cr, PRIV_DTRACE_ALL, B_FALSE)) {
 			proc_t *p;
 			pid_t pid = instr.ftiq_pid;
 

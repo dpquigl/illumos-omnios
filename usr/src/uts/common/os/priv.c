@@ -617,9 +617,12 @@ priv_proc_cred_perm(const cred_t *scr, proc_t *tp, cred_t **pcr, int mode)
 	if (!priv_issubset(&CR_IPRIV(tcr), eset) ||
 	    !priv_issubset(&CR_OPPRIV(tcr), eset) ||
 	    !priv_issubset(&CR_LPRIV(tcr), &CR_LPRIV(scr)) ||
-	    !idsmatch && secpolicy_proc_owner(scr, tcr, mode) != 0)
+	    !idsmatch && secpolicy_proc_owner(scr, tcr, mode) != 0) {	
 		res = EACCES;
+		goto out;
+	}
 
+	res = fmac_priv_proc_cred_perm(scr, tcr, mode);
 out:
 	if (res == 0 && pcr != NULL)
 		*pcr = tcr;

@@ -90,6 +90,7 @@
 #include <sys/spa.h>
 #include <sys/lofi.h>
 #include <sys/bootprops.h>
+#include <sys/fmac/fmac.h>
 
 #include <vm/page.h>
 
@@ -249,6 +250,8 @@ fsop_root(vfs_t *vfsp, vnode_t **vpp)
 		vn_setpath_str(*vpp, path, strlen(path));
 		refstr_rele(mntpt);
 	}
+	if (ret == 0)
+		(void) fmac_vfs_root(vfsp, *vpp);
 
 	return (ret);
 }

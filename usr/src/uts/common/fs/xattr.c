@@ -305,6 +305,9 @@ xattr_fill_nvlist(vnode_t *vp, xattr_view_t xattr_view, nvlist_t *nvlp,
 		case F_SPARSE:
 			XVA_SET_REQ(&xvattr, XAT_SPARSE);
 			break;
+		case F_SECCTX:
+			XVA_SET_REQ(&xvattr, XAT_SECCTX);
+			break;
 		default:
 			break;
 		}
@@ -379,6 +382,11 @@ xattr_fill_nvlist(vnode_t *vp, xattr_view_t xattr_view, nvlist_t *nvlp,
 			    attr_to_name(F_AV_SCANSTAMP),
 			    xoap->xoa_av_scanstamp,
 			    sizeof (xoap->xoa_av_scanstamp)) == 0);
+		}
+		if (XVA_ISSET_RTN(&xvattr, XAT_SECCTX)) {
+			VERIFY(nvlist_add_string(nvlp,
+			    attr_to_name(F_SECCTX),
+			    xoap->xoa_secctx) == 0);
 		}
 		if (XVA_ISSET_RTN(&xvattr, XAT_CREATETIME)) {
 			VERIFY(nvlist_add_uint64_array(nvlp,
@@ -625,6 +633,7 @@ xattr_file_write(vnode_t *vp, uio_t *uiop, int ioflag, cred_t *cr,
 		uint_t elem, nelems;
 		nvlist_t *nvp_sid;
 		uint8_t *scanstamp;
+		char *secctx = NULL;
 
 		/*
 		 * Validate the name and type of each attribute.
@@ -683,6 +692,12 @@ xattr_file_write(vnode_t *vp, uio_t *uiop, int ioflag, cred_t *cr,
 		case DATA_TYPE_UINT8_ARRAY:
 			if (nvpair_value_uint8_array(pair,
 			    &scanstamp, &nelems)) {
+				nvlist_free(nvp);
+				return (EINVAL);
+			}
+			break;
+		case DATA_TYPE_STRING:
+			if (nvpair_value_string(pair, &secctx)) {
 				nvlist_free(nvp);
 				return (EINVAL);
 			}
@@ -791,6 +806,16 @@ xattr_file_write(vnode_t *vp, uio_t *uiop, int ioflag, cred_t *cr,
 		case F_SPARSE:
 			XVA_SET_REQ(&xvattr, XAT_SPARSE);
 			xoap->xoa_sparse = value;
+			break;
+		case F_SECCTX:
+			if (!secctx ||
+			    strlen(secctx) >= sizeof (xoap->xoa_secctx)) {
+				nvlist_free(nvp);
+				return (EINVAL);
+			}
+			XVA_SET_REQ(&xvattr, XAT_SECCTX);
+			(void) strncpy(xoap->xoa_secctx, secctx,
+			    sizeof (xoap->xoa_secctx));
 			break;
 		default:
 			break;
